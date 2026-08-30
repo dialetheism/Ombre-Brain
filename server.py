@@ -201,6 +201,13 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return bool(default)
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _split_csv(value: str | None) -> list[str]:
     if value is None:
         return []
@@ -701,6 +708,33 @@ def _mcp_path(path: str) -> bool:
     return path == "/mcp" or path.startswith("/mcp/")
 
 
+def _mcp_auth_required() -> bool:
+    return _bool_env("OMBRE_MCP_AUTH_REQUIRED", True)
+
+
+def _mcp_mutations_enabled() -> bool:
+    return _bool_env("OMBRE_MCP_MUTATIONS_ENABLED", False)
+
+
+class McpMutationDisabledError(PermissionError):
+    pass
+
+
+def _require_mcp_mutation(
+    tool_name: str,
+    context: Context | None = None,
+    *,
+    allow_authenticated_internal_call: bool = False,
+) -> None:
+    # FastMCP injects Context for MCP calls. The two tools also reused by
+    # dashboard handlers may bypass this MCP-only gate only when no Context is
+    # present; those handlers retain their existing dashboard-session guard.
+    if allow_authenticated_internal_call and context is None:
+        return
+    if not _mcp_mutations_enabled():
+        raise McpMutationDisabledError(f"MCP mutation disabled: {tool_name}")
+
+
 def _bearer_token(headers: dict[str, str]) -> str | None:
     auth = headers.get("authorization", "")
     if not auth.lower().startswith("bearer "):
@@ -748,16 +782,33 @@ class OmbreChatGptOAuthMiddleware:
         self.protected_hosts = {host.lower() for host in protected_hosts}
 
     async def __call__(self, scope, receive, send):
-        if (
-            scope.get("type") != "http"
-            or not self.provider.enabled
-            or scope.get("method") == "OPTIONS"
-        ):
+        if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
 
         path = scope.get("path", "")
-        if _oauth_public_path(path) or not _mcp_path(path) or not self._is_protected_host(scope):
+        if _oauth_public_path(path) or not _mcp_path(path):
+            await self.app(scope, receive, send)
+            return
+
+        # OPTIONS is a metadata-only CORS preflight and never dispatches a tool.
+        if scope.get("method") == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
+        auth_required = _mcp_auth_required()
+        if auth_required and not self.provider.enabled:
+            from starlette.responses import JSONResponse
+            response = JSONResponse(
+                {"error": "mcp_auth_not_configured"},
+                status_code=503,
+            )
+            await response(scope, receive, send)
+            return
+
+        if not auth_required and (
+            not self.provider.enabled or not self._is_protected_host(scope)
+        ):
             await self.app(scope, receive, send)
             return
 
@@ -803,6 +854,43 @@ def _dashboard_auth_file() -> str:
     return os.path.join(state_dir, ".dashboard_auth.json")
 
 
+def _dashboard_setup_lock_file() -> str:
+    return os.path.join(os.path.dirname(_dashboard_auth_file()), ".dashboard_setup.complete")
+
+
+def _dashboard_setup_reservation_file() -> str:
+    return os.path.join(os.path.dirname(_dashboard_auth_file()), ".dashboard_setup.pending")
+
+
+def _write_private_text_atomic(path: str, content: str) -> None:
+    directory = os.path.dirname(path)
+    os.makedirs(directory, exist_ok=True)
+    temp_path = f"{path}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
+    fd = None
+    try:
+        fd = os.open(temp_path, flags, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            fd = None
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp_path, 0o600)
+        os.replace(temp_path, path)
+        os.chmod(path, 0o600)
+    except Exception:
+        if fd is not None:
+            os.close(fd)
+        try:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+        except OSError:
+            pass
+        raise
+
+
 def _load_dashboard_password_hash() -> str | None:
     try:
         path = _dashboard_auth_file()
@@ -819,9 +907,11 @@ def _save_dashboard_password_hash(password: str) -> None:
     salt = secrets.token_hex(16)
     digest = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
     path = _dashboard_auth_file()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        _json_lib.dump({"password_hash": f"{salt}:{digest}"}, f)
+    payload = _json_lib.dumps(
+        {"password_hash": f"{salt}:{digest}"},
+        ensure_ascii=False,
+    )
+    _write_private_text_atomic(path, payload)
 
 
 def _verify_dashboard_hash(password: str, stored: str) -> bool:
@@ -833,9 +923,62 @@ def _verify_dashboard_hash(password: str, stored: str) -> bool:
 
 
 def _dashboard_setup_needed() -> bool:
-    if os.environ.get("OMBRE_DASHBOARD_PASSWORD", ""):
+    if not _bool_env("OMBRE_DASHBOARD_SETUP_ENABLED", False):
         return False
-    return _load_dashboard_password_hash() is None
+    if _dashboard_setup_configured():
+        return False
+    return not os.path.exists(_dashboard_setup_reservation_file())
+
+
+def _dashboard_setup_configured() -> bool:
+    if os.environ.get("OMBRE_DASHBOARD_PASSWORD", ""):
+        return True
+    return os.path.exists(_dashboard_auth_file()) or os.path.exists(_dashboard_setup_lock_file())
+
+
+def _try_reserve_dashboard_setup() -> str | None:
+    if not _bool_env("OMBRE_DASHBOARD_SETUP_ENABLED", False) or _dashboard_setup_configured():
+        return None
+    path = _dashboard_setup_reservation_file()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
+    try:
+        fd = os.open(path, flags, 0o600)
+    except FileExistsError:
+        return None
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write("reserved\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(path, 0o600)
+    except Exception:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        raise
+    if _dashboard_setup_configured():
+        _release_dashboard_setup_reservation(path)
+        return None
+    return path
+
+
+def _release_dashboard_setup_reservation(path: str | None) -> None:
+    if not path:
+        return
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
+def _complete_dashboard_setup(reservation_path: str) -> None:
+    completion_path = _dashboard_setup_lock_file()
+    os.replace(reservation_path, completion_path)
+    os.chmod(completion_path, 0o600)
 
 
 @mcp.custom_route("/oauth/authorize", methods=["GET"])
@@ -971,6 +1114,26 @@ def _require_dashboard_auth(request):
         {"error": "unauthorized", "setup_needed": _dashboard_setup_needed()},
         status_code=401,
     )
+
+
+def _require_internal_hook_auth(request):
+    from starlette.responses import JSONResponse
+
+    configured_token = os.environ.get("OMBRE_INTERNAL_HOOK_TOKEN", "").strip()
+    if not configured_token:
+        return JSONResponse(
+            {"error": "internal_hook_auth_not_configured"},
+            status_code=503,
+        )
+    presented_token = str(
+        request.headers.get("x-ombre-internal-hook-token", "") or ""
+    ).strip()
+    if not presented_token or not hmac.compare_digest(presented_token, configured_token):
+        return JSONResponse(
+            {"error": "invalid_internal_hook_token"},
+            status_code=401,
+        )
+    return None
 
 
 def _require_raw_api_auth(request):
@@ -3115,31 +3278,52 @@ async def root_redirect(request):
 @mcp.custom_route("/auth/status", methods=["GET"])
 async def auth_status(request):
     from starlette.responses import JSONResponse
-    return JSONResponse(
-        {
-            "authenticated": _dashboard_authenticated(request),
-            "setup_needed": _dashboard_setup_needed(),
-            "identity": {
-                "ai_name": _ai_author_name(),
-                "user_name": _dashboard_author_name(),
-            },
+    authenticated = _dashboard_authenticated(request)
+    payload = {
+        "authenticated": authenticated,
+        "setup_needed": _dashboard_setup_needed(),
+    }
+    if authenticated:
+        payload["identity"] = {
+            "ai_name": _ai_author_name(),
+            "user_name": _dashboard_author_name(),
         }
-    )
+    return JSONResponse(payload)
 
 
 @mcp.custom_route("/auth/setup", methods=["POST"])
 async def auth_setup(request):
     from starlette.responses import JSONResponse
     if not _dashboard_setup_needed():
-        return JSONResponse({"error": "already configured"}, status_code=400)
+        return JSONResponse({"error": "setup unavailable"}, status_code=403)
+    reservation_path = _try_reserve_dashboard_setup()
+    if not reservation_path:
+        return JSONResponse({"error": "setup unavailable"}, status_code=409)
+    if _dashboard_setup_configured():
+        _release_dashboard_setup_reservation(reservation_path)
+        return JSONResponse({"error": "setup unavailable"}, status_code=409)
     try:
         body = await request.json()
     except Exception:
+        _release_dashboard_setup_reservation(reservation_path)
+        return JSONResponse({"error": "invalid json"}, status_code=400)
+    if not isinstance(body, dict):
+        _release_dashboard_setup_reservation(reservation_path)
         return JSONResponse({"error": "invalid json"}, status_code=400)
     password = str(body.get("password") or "").strip()
     if len(password) < 6:
+        _release_dashboard_setup_reservation(reservation_path)
         return JSONResponse({"error": "password must be at least 6 characters"}, status_code=400)
-    _save_dashboard_password_hash(password)
+    try:
+        _save_dashboard_password_hash(password)
+        _complete_dashboard_setup(reservation_path)
+    except Exception:
+        # If the atomic credential write completed, keep the reservation in
+        # place so a partial setup can never reopen unauthenticated setup.
+        if not os.path.exists(_dashboard_auth_file()):
+            _release_dashboard_setup_reservation(reservation_path)
+        logger.warning("Dashboard setup could not be completed", exc_info=True)
+        return JSONResponse({"error": "setup failed"}, status_code=500)
     return _dashboard_login_response()
 
 
@@ -3198,11 +3382,27 @@ async def health_check(request):
 
 
 # =============================================================
+# /auth-check-hook endpoint: verification-only internal auth no-op
+# 鉴权验证专用空操作：成功后不读取数据、不修改状态、不调用外部服务。
+# =============================================================
+@mcp.custom_route("/auth-check-hook", methods=["GET"])
+async def auth_check_hook(request):
+    auth_error = _require_internal_hook_auth(request)
+    if auth_error is not None:
+        return auth_error
+    from starlette.responses import Response
+    return Response(status_code=204)
+
+
+# =============================================================
 # /breath-hook endpoint: Dedicated hook for SessionStart
 # 会话启动专用挂载点
 # =============================================================
 @mcp.custom_route("/breath-hook", methods=["GET"])
 async def breath_hook(request):
+    auth_error = _require_internal_hook_auth(request)
+    if auth_error is not None:
+        return auth_error
     from starlette.responses import PlainTextResponse
     try:
         requested_mode = str(request.query_params.get("mode") or "").strip().lower()
@@ -3289,6 +3489,9 @@ async def breath_hook(request):
 @mcp.custom_route("/introspection-hook", methods=["GET"])
 @mcp.custom_route("/dream-hook", methods=["GET"])
 async def dream_hook(request):
+    auth_error = _require_internal_hook_auth(request)
+    if auth_error is not None:
+        return auth_error
     from starlette.responses import PlainTextResponse
     try:
         all_buckets = await bucket_mgr.list_all(include_archive=False)
@@ -3993,6 +4196,8 @@ async def entity_edge_backfill(
     include_archive: bool = False,
 ) -> dict:
     """只补 entity_edges.jsonl，不改 bucket 正文、memory_edges、tags、importance。默认 dry-run。"""
+    if not dry_run:
+        _require_mcp_mutation("entity_edge_backfill")
     return await _backfill_entity_edges(
         limit=limit,
         bucket_id=bucket_id,
@@ -7004,6 +7209,7 @@ async def reminder_create(
     session_id: str = "",
 ) -> dict:
     """创建独立照顾备忘；不写记忆桶，不触发 embedding。可设 start_at/end_at 和 daily_limit 控制每天出现次数；morning_evening 未指定时默认每天 2 次。"""
+    _require_mcp_mutation("reminder_create")
     try:
         item = reminder_store.create(
             title=title,
@@ -7047,6 +7253,7 @@ async def reminder_update(
     max_injections: int = -1,
 ) -> dict:
     """更新独立照顾备忘；完成用 status="done"，稍后用 snooze_minutes。"""
+    _require_mcp_mutation("reminder_update")
     reminder_id = _coerce_memory_id(reminder_id)
     if not reminder_id:
         return {"error": "missing reminder_id"}
@@ -7538,7 +7745,8 @@ async def breath(
             entry_tokens = count_tokens_approx(entry)
             if token_used + entry_tokens > max_tokens:
                 break
-            await bucket_mgr.touch(bucket_id)
+            if _mcp_mutations_enabled():
+                await bucket_mgr.touch(bucket_id)
             direct_results.append(entry)
             returned_moments.append(moment)
             displayed_moment_ids.append(str(moment.get("moment_id") or ""))
@@ -7724,7 +7932,8 @@ async def breath(
             entry_tokens = count_tokens_approx(entry)
             if token_used + entry_tokens > max_tokens:
                 break
-            await bucket_mgr.touch(bucket_id)
+            if _mcp_mutations_enabled():
+                await bucket_mgr.touch(bucket_id)
             displayed_bucket_ids.add(bucket_id)
             displayed_moment_ids.append(str(moment.get("moment_id") or ""))
             direct_results.append(entry)
@@ -8047,6 +8256,7 @@ async def comment_bucket(
     arousal: float = -1,
 ) -> dict:
     """给已有 bucket 追加年轮/补充感受；会 touch，不改正文。kind=feel 时 content 只能写“我……”第一人称正文，不写标题或任何 Markdown 分段。"""
+    _require_mcp_mutation("comment_bucket")
     bucket_id = _coerce_memory_id(bucket_id)
     if not bucket_id or not MEMORY_ID_RE.fullmatch(bucket_id):
         return {"error": "invalid bucket_id"}
@@ -8090,6 +8300,7 @@ async def comment_bucket(
 @mcp.tool()
 async def delete_bucket_comment(bucket_id: str, comment_id: str) -> dict:
     """删除自己通过 comment_bucket 写入的一条年轮；不会删除 bucket，也不会删除小雨/dashboard 写的年轮。"""
+    _require_mcp_mutation("delete_bucket_comment")
     bucket_id = _coerce_memory_id(bucket_id)
     comment_id = _coerce_memory_id(comment_id)
     if not bucket_id or not MEMORY_ID_RE.fullmatch(bucket_id):
@@ -8247,6 +8458,7 @@ async def hold(
     domain: str = "",
 ) -> str:
     """写一条长期记忆。单个事实/承诺/偏好用 hold；旧记忆的新感受用 comment_bucket；悄悄话用 whisper=True。date 可传事件日期；title 可选，传了就用给定标题，不传则自动生成。普通记忆不用填写 domain，系统会自动判断；维护自我锚点等特殊桶时可显式传 domain。显式 valence/arousal 会覆盖自动情绪。普通记忆 content 的最小写入就是正文；只有确实需要结构化时才按需使用 ### moment、### original、### reflection；reflection 必须写成“我……”第一人称。不要写 ### affect_anchor、### followup 或 ### todo：长期回应变化写进 reflection，到时提醒用 reminder_create。feel=True/whisper=True 时 content 只能写第一人称正文，不写标题或任何 Markdown 分段。"""
+    _require_mcp_mutation("hold")
     await decay_engine.ensure_started()
 
     # --- Input validation / 输入校验 ---
@@ -8412,6 +8624,7 @@ async def darkroom_enter(
     new_room: bool = True,
 ) -> dict:
     """写入一段未显影的私密反思；默认第一人称，不用第三人称自述；默认新开房间，new_room=false 才续写当前 active 房间；写错要撤回已有房间时传 new_room=false + visibility="retracted"；不回显 note 正文。"""
+    _require_mcp_mutation("darkroom_enter")
     try:
         return darkroom_store.enter(
             note,
@@ -8439,6 +8652,7 @@ async def darkroom_rooms(limit: int = 20, visibility: str = "active") -> dict:
 @mcp.tool()
 async def darkroom_delete(room_id: str, confirm: str = "") -> dict:
     """从暗房主存储删除一整间房及全部 revisions；必须传精确 room_id 和 confirm="DELETE"，并保留本地私密备份。"""
+    _require_mcp_mutation("darkroom_delete")
     try:
         return darkroom_store.delete_room(room_id, confirm=confirm)
     except ValueError as exc:
@@ -8561,6 +8775,7 @@ async def _grow_direct_structured_content(content: str, title: str = "", gate_pr
 @mcp.tool()
 async def grow(content: str, auto: bool = False, source: str = "", title: str = "", context: Context | None = None) -> str:
     """把筛过的长片段拆成少量长期记忆；单条事实/承诺/偏好优先 hold，旧记忆补感受优先 comment_bucket。只有多个已筛选长期记忆点才用 grow，别塞整段流水账。保留原文称呼、昵称、互称、自称和原话，不要把临时称呼推成稳定画像事实。title 可选，短内容时传了就用你给的标题。普通记忆 content 的最小写入就是正文；只有确实需要结构化时才按需使用 ### moment、### original、### reflection；reflection 必须写成“我……”第一人称。不要写 ### affect_anchor、### followup 或 ### todo：长期回应变化写进 reflection，到时提醒用 reminder_create。feel 年轮只写第一人称正文，不写标题或任何 Markdown 分段。"""
+    _require_mcp_mutation("grow")
     await decay_engine.ensure_started()
 
     if not content or not content.strip():
@@ -8719,8 +8934,14 @@ async def profile_fact(
     evidence_context: str = "",
     reflection: str = "",
     confidence: float = 0.9,
+    context: Context | None = None,
 ) -> str:
     """手动写入一条画像事实，并强制关联证据桶。先有事件桶，再用这个工具固化稳定偏好/事实。reflection 可选，但必须写成“我……”第一人称；不要写 followup。"""
+    _require_mcp_mutation(
+        "profile_fact",
+        context,
+        allow_authenticated_internal_call=True,
+    )
     fact = str(fact or "").strip()
     evidence_bucket_id = str(evidence_bucket_id or "").strip()
     if not fact:
@@ -8855,8 +9076,14 @@ async def trace(
     content: str = "",
     date: str = "",
     delete: bool = False,
+    context: Context | None = None,
 ) -> str:
     """修改已有记忆，不创建新桶。tags/domain/content 是替换；date 可改事件日期；改前先 read_bucket。resolved/digested 让旧事沉底。只改元数据/date 不重建 embedding，改 content/name 才重建。"""
+    _require_mcp_mutation(
+        "trace",
+        context,
+        allow_authenticated_internal_call=True,
+    )
 
     bucket_id = _coerce_memory_id(bucket_id)
     if not bucket_id:
