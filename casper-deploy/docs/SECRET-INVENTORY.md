@@ -8,6 +8,7 @@ values into chat.
 | Deployment variable | Container/source variable | Consumer | Initial status | Purpose | Rotation impact |
 |---|---|---|---|---|---|
 | CASPER_OMBRE_GATEWAY_TOKEN | OMBRE_GATEWAY_TOKEN | Gateway only | Required | Bearer auth for RikkaHub/OpenAI-compatible clients | Update Gateway env and client together using a controlled overlap plan |
+| CASPER_INTERNAL_HOOK_TOKEN | OMBRE_INTERNAL_HOOK_TOKEN | Brain only | Required | Brain internal hook authentication | Brain-only restart/recreate; keep separate from Gateway token and never print/commit value |
 | CASPER_OPENROUTER_API_KEY | CASPER_OPENROUTER_API_KEY | Gateway only | Required | OpenRouter chat upstream | Gateway-only restart/recreate; no Brain data migration |
 | CASPER_DEHYDRATION_API_KEY | OMBRE_API_KEY | Brain and Gateway | Required | Compression, merge, tagging, memory helper chat calls | Both services receive it; validate manual write paths after rotation |
 | CASPER_EMBEDDING_API_KEY | OMBRE_EMBEDDING_API_KEY | Brain and Gateway | Required | Remote embeddings | Both services receive it; verify query and write embeddings |
