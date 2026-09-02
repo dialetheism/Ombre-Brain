@@ -1,0 +1,46 @@
+diff --git a/config.example.yaml b/config.example.yaml
+--- a/config.example.yaml
++++ b/config.example.yaml
+@@ -130,6 +130,7 @@ self_anchor:
+ # Simulates Ebbinghaus forgetting curve, auto-archives inactive memories
+ # 模拟艾宾浩斯遗忘曲线，自动归档不活跃的记忆
+ decay:
++  auto_resolve_enabled: true       # Auto-resolve importance <=4 after 30 inactive days
+   lambda: 0.05                    # Decay rate / 衰减速率（越大遗忘越快）
+   threshold: 0.3                  # Archive threshold / 归档阈值
+   check_interval_hours: 24        # Check interval (hours) / 衰减检查间隔（小时）
+diff --git a/decay_engine.py b/decay_engine.py
+--- a/decay_engine.py
++++ b/decay_engine.py
+@@ -39,6 +39,11 @@ class DecayEngine:
+     def __init__(self, config: dict, bucket_mgr):
+         # --- Load decay parameters / 加载衰减参数 ---
+         decay_cfg = config.get("decay", {})
++        auto_resolve = decay_cfg.get("auto_resolve_enabled", True)
++        self.auto_resolve_enabled = (
++            auto_resolve if isinstance(auto_resolve, bool)
++            else str(auto_resolve).strip().lower() not in {"0", "false", "no", "off"}
++        )
+         self.decay_lambda = decay_cfg.get("lambda", 0.05)
+         self.threshold = decay_cfg.get("threshold", 0.3)
+         self.check_interval = decay_cfg.get("check_interval_hours", 24)
+@@ -215,7 +220,7 @@ class DecayEngine:
+ 
+             # --- Auto-resolve: imp≤4 + >30 days old + not resolved → auto resolve ---
+             # --- 自动结案：重要度≤4 + 超过30天 + 未解决 → 自动 resolve ---
+-            if not meta.get("resolved", False):
++            if self.auto_resolve_enabled and not meta.get("resolved", False):
+                 imp = int(meta.get("importance", 5))
+                 last_active_str = meta.get("last_active", meta.get("created", ""))
+                 try:
+diff --git a/utils.py b/utils.py
+--- a/utils.py
++++ b/utils.py
+@@ -228,6 +228,7 @@ def default_config() -> dict:
+             "max_evidence_chars": 120,
+         },
+         "decay": {
++            "auto_resolve_enabled": True,
+             "lambda": 0.05,
+             "threshold": 0.3,
+             "check_interval_hours": 24,

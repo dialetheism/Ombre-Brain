@@ -1,0 +1,81 @@
+diff --git a/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt b/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+--- a/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
++++ b/app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt
+@@ -17,6 +17,7 @@ import kotlinx.serialization.json.buildJsonObject
+ import kotlinx.serialization.json.put
+ import me.rerere.ai.core.MessageRole
+ import me.rerere.ai.core.ReasoningLevel
+ import me.rerere.ai.core.Tool
+ import me.rerere.ai.provider.CustomBody
++import me.rerere.ai.provider.CustomHeader
+ import me.rerere.ai.provider.Model
+@@ -54,6 +55,25 @@ import kotlin.uuid.Uuid
+ private const val TAG = "GenerationHandler"
+ private const val MAX_TOOL_OUTPUT_CHARS = 32 * 1024
+ private const val TOOL_OUTPUT_PREVIEW_CHARS = 4 * 1024
++private const val CONVERSATION_ID_HEADER_TEMPLATE = "{{conversation_id}}"
++private val FULL_CUSTOM_HEADER_TEMPLATE = Regex("""^\{\{[A-Za-z_][A-Za-z0-9_]*\}\}$""")
++
++private fun List<CustomHeader>.resolveCustomHeaderTemplates(
++    conversationId: Uuid?,
++): List<CustomHeader> = map { header ->
++    when {
++        header.value == CONVERSATION_ID_HEADER_TEMPLATE -> header.copy(
++            value = requireNotNull(conversationId) {
++                "conversation_id is unavailable for this generation request"
++            }.toString()
++        )
++
++        FULL_CUSTOM_HEADER_TEMPLATE.matches(header.value) ->
++            error("Unsupported custom-header template variable")
++
++        else -> header
++    }
++}
+ 
+ @Serializable
+ sealed interface GenerationChunk {
+@@ -79,6 +99,7 @@ class GenerationHandler(
+         tools: List<Tool> = emptyList(),
+         maxSteps: Int = 256,
+         processingStatus: MutableStateFlow<String?> = MutableStateFlow(null),
++        conversationId: Uuid? = null,
+         conversationSystemPrompt: String? = null,
+         conversationModeInjectionIds: Set<Uuid> = emptySet(),
+         conversationLorebookIds: Set<Uuid> = emptySet(),
+@@ -157,6 +178,7 @@ class GenerationHandler(
+                     memories = memories ?: emptyList(),
+                     stream = assistant.streamOutput,
+                     processingStatus = processingStatus,
++                    conversationId = conversationId,
+                     conversationSystemPrompt = conversationSystemPrompt,
+                     conversationModeInjectionIds = conversationModeInjectionIds,
+                     conversationLorebookIds = conversationLorebookIds,
+@@ -356,6 +378,7 @@ class GenerationHandler(
+         memories: List<AssistantMemory>,
+         stream: Boolean,
+         processingStatus: MutableStateFlow<String?> = MutableStateFlow(null),
++        conversationId: Uuid? = null,
+         conversationSystemPrompt: String? = null,
+         conversationModeInjectionIds: Set<Uuid> = emptySet(),
+         conversationLorebookIds: Set<Uuid> = emptySet(),
+@@ -409,7 +432,7 @@ class GenerationHandler(
+             customHeaders = buildList {
+                 addAll(assistant.customHeaders)
+                 addAll(model.customHeaders)
+-            },
++            }.resolveCustomHeaderTemplates(conversationId),
+             customBody = buildList {
+                 addAll(assistant.customBodies)
+                 addAll(model.customBodies)
+diff --git a/app/src/main/java/me/rerere/rikkahub/service/ChatService.kt b/app/src/main/java/me/rerere/rikkahub/service/ChatService.kt
+--- a/app/src/main/java/me/rerere/rikkahub/service/ChatService.kt
++++ b/app/src/main/java/me/rerere/rikkahub/service/ChatService.kt
+@@ -513,6 +513,7 @@ class ChatService(
+                 settings = settings,
+                 model = model,
+                 processingStatus = session.processingStatus,
++                conversationId = conversation.id,
+                 messages = conversation.currentMessages.let {
+                     if (messageRange != null) {
+                         it.subList(messageRange.start, messageRange.endInclusive + 1)

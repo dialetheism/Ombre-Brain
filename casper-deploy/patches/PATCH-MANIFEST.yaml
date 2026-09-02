@@ -1,0 +1,192 @@
+schema_version: 1
+deployment_stage: "C2F1_REPRODUCIBLE_BUILD_SUPPLY_CHAIN_FROZEN_UNSIGNED_RELEASE_VALIDATED"
+ombre_upstream_sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+rikkahub_upstream_sha: "8dc3ebce3f422a422013097447234e4a97db4210"
+application_strategy: "CLEAN_FROZEN_CHECKOUT_VERIFY_APPLY_INDEX_BUILD"
+apply_failure_policy: "HARD_FAIL"
+offset_or_fuzz_policy: "REJECT"
+
+rikkahub_build_validation:
+  patch_unchanged: true
+  launcher_java_version: "17.0.20"
+  gradle_daemon_java_version: "21.0.10"
+  java_kotlin_bytecode_target: 17
+  header_template_tests: "PASS_10_OF_10"
+  kotlin_compile_task: ":app:compileDebugKotlin"
+  kotlin_compile: "PASS"
+  debug_apk_task: ":app:assembleDebug"
+  debug_apk_build: "PASS"
+  debug_apk_application_id: "me.rerere.rikkahub.debug"
+  debug_apk_sha256: "6572928a7fad57cf8bf119a8daf910f37fcdc9966d6cf0d0b80ba4b57a383e27"
+  debug_apk_signing: "ANDROID_DEBUG"
+  device_runtime_validation: "PASS_C2D2B"
+
+rikkahub_production_packaging_validation:
+  production_application_id: "me.rerere.rikkahub.casper"
+  display_name: "RikkaHub Casper"
+  private_uri_scheme: "rikkahub-casper"
+  patch_check: "PASS_EXACT"
+  patch_offset_count: 0
+  patch_fuzz_count: 0
+  changed_file_count: 7
+  gradle_configuration_parsed: true
+  firebase_analytics_crashlytics_removed: true
+  production_signing_environment_only: true
+  release_compile: "PASS_STRICT_LOCKED_CLEAN_COPY"
+  resource_merge: "PASS"
+  manifest_merge: "PASS"
+  production_apk_build: "PASS_UNSIGNED"
+  unsigned_arm64_apk_sha256: "a58ecc6f8485504883d65c686d3d7654bfc34732d691e8746dd0fcc37035ea6b"
+  signing_gate: "UNSIGNED_PATH_VALIDATED_REAL_KEY_REQUIRED_FOR_SIGNED_ARTIFACT"
+
+rikkahub_reproducibility_validation:
+  patch_check: "PASS_EXACT"
+  patch_offset_count: 0
+  patch_fuzz_count: 0
+  changed_file_count: 19
+  gradle_wrapper_version: "9.5.0"
+  gradle_wrapper_distribution_sha256: "553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746"
+  gradle_wrapper_checksum_source: "OFFICIAL_GRADLE_RELEASE_CHECKSUMS"
+  dependency_locking: "STRICT"
+  dependency_lock_file_count: 11
+  unlocked_production_configuration_count: 0
+  sqlite_android_coordinate: "com.github.rikkahub:sqlite-android:80cedc8888df2fe1d22d7f9bf8d9287f621624be"
+  sqlite_android_aar_sha256: "e3e571e470dd76bc13fa2c7d89e7b80d3c63396e5a1235c8bd89dd261d407980"
+  maven_local_enabled: false
+  dynamic_dependency_count_before: 46
+  dynamic_dependency_count_after: 0
+  strict_release_package: "PASS"
+
+patches:
+  - name: "rikkahub-conversation-session-header"
+    file: "rikkahub-conversation-session-header.patch"
+    target: "rikkahub"
+    purpose: "Expand explicitly configured custom-header {{conversation_id}} from the persisted Conversation UUID"
+    required: true
+    upstream_sha: "8dc3ebce3f422a422013097447234e4a97db4210"
+    sha256: "d878ff5ff0a4641c4cc4c64a15a8b687189392c752994d9b7db5154dcdf05264"
+    expected_files:
+      - "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+      - "app/src/main/java/me/rerere/rikkahub/service/ChatService.kt"
+    expected_post_apply:
+      - path: "app/src/main/java/me/rerere/rikkahub/data/ai/GenerationHandler.kt"
+        sha256: "2e3511b0c1fa33f717bbf1c95f7fd61d55a71a1c462da8ead3f039b21651706b"
+      - path: "app/src/main/java/me/rerere/rikkahub/service/ChatService.kt"
+        sha256: "2005b92fb3976253e532defad696c95feef043ad1b180e2dc5c27a09431d98d5"
+
+  - name: "ombre-disable-auto-resolve"
+    file: "ombre-disable-auto-resolve.patch"
+    target: "ombre"
+    purpose: "Add an upstream-compatible decay.auto_resolve_enabled switch and let Casper disable automatic resolve"
+    required: true
+    upstream_sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+    sha256: "e4f96bdce44d58326dd0cd5844a00e8f22e033fa45961fda0a991250531c19ce"
+    expected_files:
+      - "config.example.yaml"
+      - "decay_engine.py"
+      - "utils.py"
+    expected_post_apply:
+      - path: "config.example.yaml"
+        sha256: "a5b1e13b92ba5ab4c757c56fe2488349ce7baac97f38ac46fd3b3350a48816e3"
+      - path: "decay_engine.py"
+        sha256: "5e734c90d66a4b7099e735b4815edf20d1624043719461cf5585adf9cb0d6a1b"
+      - path: "utils.py"
+        sha256: "13f6d9a002058dd505528ffffd12b304ec1836ec5ee1d6e9ed3e1c4d3807f44c"
+
+  - name: "rikkahub-casper-production-packaging"
+    file: "rikkahub-casper-production-packaging.patch"
+    target: "rikkahub"
+    purpose: "Create a collision-free Casper production package, environment-only signing hooks, private URI scheme, and a Firebase-project-free core client"
+    required: true
+    upstream_sha: "8dc3ebce3f422a422013097447234e4a97db4210"
+    sha256: "af02a95fe468ef592c63601964b98ca3dd11bb43c627d594b76e8c4828eedaf2"
+    expected_files:
+      - "app/build.gradle.kts"
+      - "app/src/main/AndroidManifest.xml"
+      - "app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt"
+      - "app/src/main/java/me/rerere/rikkahub/di/AppModule.kt"
+      - "app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt"
+      - "app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt"
+      - "app/src/main/res/xml/shortcuts.xml"
+    expected_post_apply:
+      - path: "app/build.gradle.kts"
+        sha256: "f5ae19a04572656a1de4c58a83d8b9b2e83f260e54991a6fd9190c50657806f8"
+      - path: "app/src/main/AndroidManifest.xml"
+        sha256: "2c905b7a482ecfb5c341eed0f7e4050bc122eef45d2885048f944ce6d6e7638f"
+      - path: "app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt"
+        sha256: "10ea28973a71b8538633a3012a22501034d44521f9c4e5783bcaf0660040b486"
+      - path: "app/src/main/java/me/rerere/rikkahub/di/AppModule.kt"
+        sha256: "1259f7635af77dc75515ca7e9f784e9bdad0148cda76321feab159307983b714"
+      - path: "app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt"
+        sha256: "3258d7209c2634fbf162ee1579f68df871f222e0f336aead6057130e641b9b0d"
+      - path: "app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt"
+        sha256: "44780752173b29332284b6bba79467f1ba5e4cc603457efd33fb593d7ded44cf"
+      - path: "app/src/main/res/xml/shortcuts.xml"
+        sha256: "23a1b1e59204fa6bb5132910431a85cf899882e34f7d144b80093099f42d7dfb"
+
+  - name: "rikkahub-casper-build-reproducibility"
+    file: "rikkahub-casper-build-reproducibility.patch"
+    target: "rikkahub"
+    purpose: "Freeze the Gradle wrapper, production dependency graphs and artifacts, sqlite-android commit, repository policy, and web dependency selectors"
+    required: true
+    upstream_sha: "8dc3ebce3f422a422013097447234e4a97db4210"
+    sha256: "81eb44e39a9fc8a099016870ff382980c459b1510cecb6334fb9281c0f388293"
+    expected_files:
+      - "ai/gradle.lockfile"
+      - "app/gradle.lockfile"
+      - "build.gradle.kts"
+      - "common/gradle.lockfile"
+      - "document/gradle.lockfile"
+      - "gradle/libs.versions.toml"
+      - "gradle/verification-metadata.xml"
+      - "gradle/wrapper/gradle-wrapper.properties"
+      - "highlight/gradle.lockfile"
+      - "material3/gradle.lockfile"
+      - "search/gradle.lockfile"
+      - "settings-gradle.lockfile"
+      - "settings.gradle.kts"
+      - "speech/gradle.lockfile"
+      - "web-ui/.npmrc"
+      - "web-ui/package.json"
+      - "web-ui/pnpm-lock.yaml"
+      - "web/gradle.lockfile"
+      - "workspace/gradle.lockfile"
+    expected_post_apply:
+      - path: "ai/gradle.lockfile"
+        sha256: "4aeff21af44bcccf22803a3b9c45e3663afcc38276b78b49b50b1c90b544900b"
+      - path: "app/gradle.lockfile"
+        sha256: "26c2307b5dd7d57b25ee780595dea1fbddf1df560826da08b0ccfc5cc2255531"
+      - path: "build.gradle.kts"
+        sha256: "15ca7d61641bfff8de1e590cee3162f7e64967f66be558498ba741ba13d305c5"
+      - path: "common/gradle.lockfile"
+        sha256: "75fcaeb35caa3a1af070d78ba0cb2a6ad34e6e24f7dbe7d2b041dc9cf853c234"
+      - path: "document/gradle.lockfile"
+        sha256: "d4de68f912e4d1e72c30b4a6c7c9f79aba1a2552275a40ea3b0ed9ba8aff098d"
+      - path: "gradle/libs.versions.toml"
+        sha256: "6ba82a569d2e0762f057c63dd644e34f64f5d7ad5874d46e2d91cbcb372178fd"
+      - path: "gradle/verification-metadata.xml"
+        sha256: "1bbf09db08b537d737ad7145d44139313eb89e6c43853374ac495e63f48d15e7"
+      - path: "gradle/wrapper/gradle-wrapper.properties"
+        sha256: "bc7b77476f489862e495934f5a80dd05acba5d3671b437084f3fb72921149f48"
+      - path: "highlight/gradle.lockfile"
+        sha256: "960273351707957857f85c65491a63414a29dfcfb6fe87327e48815c6bace6c2"
+      - path: "material3/gradle.lockfile"
+        sha256: "8ef2e6c26c5cdea818f4974b431db897cf2fa229224c64c68fc1b86cef5f67cf"
+      - path: "search/gradle.lockfile"
+        sha256: "1855ccc13e333a90c0196a9ae663d69ff1711f68b535ef62f3187ed5be573166"
+      - path: "settings-gradle.lockfile"
+        sha256: "6656e3aed66762d2f39666de089080c66a3224078aabdf27764b041da508df84"
+      - path: "settings.gradle.kts"
+        sha256: "96bfa1df5440c3b21c615503059c5ee07de17f1471c96f1b569ccd557cc63933"
+      - path: "speech/gradle.lockfile"
+        sha256: "3ef727b9fa851c2628443250561e15c8697c304de58ae4c17c3e5fa4df9aa094"
+      - path: "web-ui/.npmrc"
+        sha256: "a418f777f4996229ad565b05d04c40d7632d80f4096ee2a85841300259bf85b2"
+      - path: "web-ui/package.json"
+        sha256: "da230f89f9e82e6157660e45497e2f8930c4b269fdcd73e32684ef48fbe24c5e"
+      - path: "web-ui/pnpm-lock.yaml"
+        sha256: "e71e1107d04669026700459fd4419ad0854f86dbc9f8367165342cd7067e64bb"
+      - path: "web/gradle.lockfile"
+        sha256: "79e8f7a9a70596c7eb720969a44a811a565089b622bfe89096168b3d39b3a103"
+      - path: "workspace/gradle.lockfile"
+        sha256: "21d2b0761c0185106db81c21232909aad77eeec00e81a2aca8df06e7a2a3bc9b"

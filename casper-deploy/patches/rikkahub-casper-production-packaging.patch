@@ -1,0 +1,259 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index 71dd79a44d78e7bd32b8da8f5007614baa98bc85..141938b727b8545fd4013f8cc75b449f7e4a0185 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -1,16 +1,12 @@
+ import com.android.build.api.dsl.Packaging
+ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+-import java.io.FileInputStream
+-import java.util.Properties
+ 
+ plugins {
+     alias(libs.plugins.android.application)
+     alias(libs.plugins.kotlin.compose)
+     alias(libs.plugins.kotlin.serialization)
+     alias(libs.plugins.ksp)
+-    alias(libs.plugins.google.services)
+-    alias(libs.plugins.firebase.crashlytics)
+     alias(libs.plugins.baselineprofile)
+ }
+ 
+@@ -19,7 +15,7 @@ android {
+     compileSdk = 37
+ 
+     defaultConfig {
+-        applicationId = "me.rerere.rikkahub"
++        applicationId = "me.rerere.rikkahub.casper"
+         minSdk = 26
+         targetSdk = 37
+         versionCode = 176
+@@ -44,34 +40,39 @@ android {
+         }
+     }
+ 
+-    signingConfigs {
+-        create("release") {
+-            val localProperties = Properties()
+-            val localPropertiesFile = rootProject.file("local.properties")
+-
+-            if (localPropertiesFile.exists()) {
+-                localProperties.load(FileInputStream(localPropertiesFile))
+-
+-                val storeFilePath = localProperties.getProperty("storeFile")
+-                val storePasswordValue = localProperties.getProperty("storePassword")
+-                val keyAliasValue = localProperties.getProperty("keyAlias")
+-                val keyPasswordValue = localProperties.getProperty("keyPassword")
+-
+-                if (storeFilePath != null && storePasswordValue != null &&
+-                    keyAliasValue != null && keyPasswordValue != null
+-                ) {
+-                    storeFile = file(storeFilePath)
+-                    storePassword = storePasswordValue
+-                    keyAlias = keyAliasValue
+-                    keyPassword = keyPasswordValue
++    val signingEnvironment = mapOf(
++        "CASPER_RIKKAHUB_KEYSTORE_PATH" to System.getenv("CASPER_RIKKAHUB_KEYSTORE_PATH"),
++        "CASPER_RIKKAHUB_KEYSTORE_PASSWORD" to System.getenv("CASPER_RIKKAHUB_KEYSTORE_PASSWORD"),
++        "CASPER_RIKKAHUB_KEY_ALIAS" to System.getenv("CASPER_RIKKAHUB_KEY_ALIAS"),
++        "CASPER_RIKKAHUB_KEY_PASSWORD" to System.getenv("CASPER_RIKKAHUB_KEY_PASSWORD"),
++    )
++    val configuredSigningValues = signingEnvironment.filterValues { !it.isNullOrBlank() }
++    require(configuredSigningValues.isEmpty() || configuredSigningValues.size == signingEnvironment.size) {
++        "Casper signing environment variables must be either all set or all unset"
++    }
++
++    if (configuredSigningValues.size == signingEnvironment.size) {
++        signingConfigs {
++            create("release") {
++                val signingStoreFile = rootProject.file(
++                    signingEnvironment.getValue("CASPER_RIKKAHUB_KEYSTORE_PATH")!!
++                )
++                require(signingStoreFile.isFile) {
++                    "Casper signing keystore path is not a regular file"
+                 }
++                storeFile = signingStoreFile
++                storePassword = signingEnvironment.getValue("CASPER_RIKKAHUB_KEYSTORE_PASSWORD")!!
++                keyAlias = signingEnvironment.getValue("CASPER_RIKKAHUB_KEY_ALIAS")!!
++                keyPassword = signingEnvironment.getValue("CASPER_RIKKAHUB_KEY_PASSWORD")!!
+             }
+         }
+     }
+ 
+     buildTypes {
+         release {
+-            signingConfig = signingConfigs.getByName("release")
++            if (configuredSigningValues.size == signingEnvironment.size) {
++                signingConfig = signingConfigs.getByName("release")
++            }
+             optimization {
+                 enable = true
+             }
+@@ -166,11 +167,6 @@ dependencies {
+     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+     implementation(libs.androidx.material3.adaptive.navigation3)
+ 
+-    // Firebase
+-    implementation(platform(libs.firebase.bom))
+-    implementation(libs.firebase.analytics)
+-    implementation(libs.firebase.crashlytics)
+-
+     // DataStore
+     implementation(libs.androidx.datastore.preferences)
+ 
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index c3f64b5f0638ee38ca4467b3f89acaa4edbbb753..c3247772fb1e374ccd7f26e85e575bfb9d1edf54 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -53,7 +53,7 @@
+     android:enableOnBackInvokedCallback="true"
+     android:fullBackupContent="@xml/backup_rules"
+     android:icon="@mipmap/ic_launcher"
+-    android:label="@string/app_name"
++    android:label="RikkaHub Casper"
+     android:supportsRtl="true"
+     android:theme="@style/Theme.Rikkahub"
+     android:usesCleartextTraffic="true"
+@@ -105,7 +105,7 @@
+ 
+         <data
+           android:host="shortcut"
+-          android:scheme="rikkahub" />
++          android:scheme="rikkahub-casper" />
+       </intent-filter>
+     </activity>
+     <activity
+@@ -121,7 +121,7 @@
+ 
+         <data
+           android:host="mcp-oauth-callback"
+-          android:scheme="rikkahub" />
++          android:scheme="rikkahub-casper" />
+       </intent-filter>
+     </activity>
+     <activity
+diff --git a/app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt b/app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt
+index 432560f539a68a0fe51dc20c1494aaa34ddd4648..0efd23be2d54e6e2ccb2845065567da045671d43 100644
+--- a/app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt
++++ b/app/src/main/java/me/rerere/rikkahub/data/ai/mcp/McpOAuthCallback.kt
+@@ -6,7 +6,7 @@ import androidx.browser.customtabs.CustomTabsIntent
+ import androidx.core.net.toUri
+ 
+ /** OAuth 授权回调的 redirect_uri，需与 AndroidManifest 中 McpOAuthCallbackActivity 的 intent-filter 保持一致。 */
+-const val MCP_OAUTH_REDIRECT_URI = "rikkahub://mcp-oauth-callback"
++const val MCP_OAUTH_REDIRECT_URI = "rikkahub-casper://mcp-oauth-callback"
+ 
+ /** 使用 Chrome Custom Tabs 打开授权 URL。 */
+ fun launchOAuthAuthorization(context: Context, authorizationUrl: String) {
+diff --git a/app/src/main/java/me/rerere/rikkahub/di/AppModule.kt b/app/src/main/java/me/rerere/rikkahub/di/AppModule.kt
+index a28c2f2093550bbf7760a576764b8741531c6720..724098b732f64a301ff7e603f5598396b6269557 100644
+--- a/app/src/main/java/me/rerere/rikkahub/di/AppModule.kt
++++ b/app/src/main/java/me/rerere/rikkahub/di/AppModule.kt
+@@ -1,8 +1,5 @@
+ package me.rerere.rikkahub.di
+ 
+-import com.google.firebase.Firebase
+-import com.google.firebase.analytics.analytics
+-import com.google.firebase.crashlytics.crashlytics
+ import kotlinx.serialization.json.Json
+ import me.rerere.rikkahub.AppScope
+ import me.rerere.rikkahub.data.ai.tools.local.LocalTools
+@@ -45,14 +42,6 @@ val appModule = module {
+         TTSManager(get())
+     }
+ 
+-    single {
+-        Firebase.crashlytics
+-    }
+-
+-    single {
+-        Firebase.analytics
+-    }
+-
+     single {
+         SoundEffectPlayer(get())
+     }
+diff --git a/app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt b/app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt
+index 87df6ca72d6961c2662eebc2fbe751e8713227b4..279c36aedb367e2057b017bcdc3e48971f2a1b26 100644
+--- a/app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt
++++ b/app/src/main/java/me/rerere/rikkahub/di/ViewModelModule.kt
+@@ -33,7 +33,6 @@ val viewModelModule = module {
+             conversationRepo = get(),
+             chatService = get(),
+             updateChecker = get(),
+-            analytics = get(),
+             filesManager = get(),
+             favoriteRepository = get(),
+         )
+diff --git a/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt b/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt
+index aaeada4f3991de55af85b66d09e0f3b471e3b8a9..dfee99e192191743673e10f0fe951e37036f880b 100644
+--- a/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt
++++ b/app/src/main/java/me/rerere/rikkahub/ui/pages/chat/ChatVM.kt
+@@ -11,7 +11,6 @@ import androidx.compose.ui.tooling.preview.Preview
+ import androidx.core.net.toUri
+ import androidx.lifecycle.ViewModel
+ import androidx.lifecycle.viewModelScope
+-import com.google.firebase.analytics.FirebaseAnalytics
+ import kotlinx.coroutines.Job
+ import kotlinx.coroutines.flow.SharedFlow
+ import kotlinx.coroutines.flow.SharingStarted
+@@ -57,7 +56,6 @@ class ChatVM(
+     private val conversationRepo: ConversationRepository,
+     private val chatService: ChatService,
+     val updateChecker: UpdateChecker,
+-    private val analytics: FirebaseAnalytics,
+     private val filesManager: FilesManager,
+     private val favoriteRepository: FavoriteRepository,
+ ) : ViewModel() {
+@@ -190,14 +188,12 @@ class ChatVM(
+      */
+     fun handleMessageSend(content: List<UIMessagePart>,answer: Boolean = true) {
+         if (content.isEmptyInputMessage()) return
+-        analytics.logEvent("ai_send_message", null)
+ 
+         chatService.sendMessage(_conversationId, content, answer)
+     }
+ 
+     fun handleMessageEdit(parts: List<UIMessagePart>, messageId: Uuid) {
+         if (parts.isEmptyInputMessage()) return
+-        analytics.logEvent("ai_edit_message", null)
+ 
+         viewModelScope.launch {
+             chatService.editMessage(_conversationId, messageId, parts)
+@@ -240,7 +236,6 @@ class ChatVM(
+         message: UIMessage,
+         regenerateAssistantMsg: Boolean = true
+     ) {
+-        analytics.logEvent("ai_regenerate_at_message", null)
+         chatService.regenerateAtMessage(_conversationId, message, regenerateAssistantMsg)
+     }
+ 
+@@ -249,7 +244,6 @@ class ChatVM(
+         approved: Boolean,
+         reason: String = ""
+     ) {
+-        analytics.logEvent("ai_tool_approval", null)
+         chatService.handleToolApproval(_conversationId, toolCallId, approved, reason)
+     }
+ 
+@@ -257,7 +251,6 @@ class ChatVM(
+         toolCallId: String,
+         answer: String,
+     ) {
+-        analytics.logEvent("ai_tool_answer", null)
+         chatService.handleToolApproval(_conversationId, toolCallId, approved = true, answer = answer)
+     }
+ 
+diff --git a/app/src/main/res/xml/shortcuts.xml b/app/src/main/res/xml/shortcuts.xml
+index 88a638f342bbed9aef09f88a49b1bea350f946d7..ba551b75630bcc3b28511b080a79d33edf731df4 100644
+--- a/app/src/main/res/xml/shortcuts.xml
++++ b/app/src/main/res/xml/shortcuts.xml
+@@ -9,7 +9,7 @@
+         <intent
+             android:action="android.intent.action.VIEW"
+             android:targetClass="me.rerere.rikkahub.ui.activity.ShortcutHandlerActivity"
+-            android:data="rikkahub://shortcut" />
++            android:data="rikkahub-casper://shortcut" />
+         <categories android:name="android.shortcut.conversation" />
+     </shortcut>
+ </shortcuts>

@@ -1,0 +1,189 @@
+name: "casper-ombre"
+
+services:
+  casper-ombre-brain:
+    image: "casper-ombre-brain:c2g10l-local-candidate-284c9c7"
+    pull_policy: "never"
+    container_name: "casper-ombre-brain"
+    command: ["python", "server.py"]
+    environment:
+      OMBRE_CONFIG_PATH: "/app/config.yaml"
+      OMBRE_BUCKETS_DIR: "/data"
+      OMBRE_STATE_DIR: "/state"
+      OMBRE_RUNTIME_CONFIG_PATH: "/state/config.runtime.yaml"
+      OMBRE_TRANSPORT: "streamable-http"
+      TZ: "Asia/Shanghai"
+      OMBRE_API_KEY: ${CASPER_DEHYDRATION_API_KEY:?CASPER_DEHYDRATION_API_KEY is required}
+      OMBRE_DEHYDRATION_BASE_URL: "${CASPER_DEHYDRATION_BASE_URL:?CASPER_DEHYDRATION_BASE_URL is required}"
+      OMBRE_DEHYDRATION_MODEL: "${CASPER_DEHYDRATION_MODEL:?CASPER_DEHYDRATION_MODEL is required}"
+      OMBRE_EMBEDDING_API_KEY: "${CASPER_EMBEDDING_API_KEY:?CASPER_EMBEDDING_API_KEY is required}"
+      OMBRE_EMBEDDING_BASE_URL: "${CASPER_EMBEDDING_BASE_URL:?CASPER_EMBEDDING_BASE_URL is required}"
+      OMBRE_EMBEDDING_MODEL: "${CASPER_EMBEDDING_MODEL:?CASPER_EMBEDDING_MODEL is required}"
+      OMBRE_RERANKER_API_KEY: "${CASPER_RERANKER_API_KEY:-}"
+      OMBRE_RERANKER_BASE_URL: "${CASPER_RERANKER_BASE_URL:-}"
+      OMBRE_RERANKER_MODEL: "${CASPER_RERANKER_MODEL:-}"
+      OMBRE_PERSONA_API_KEY: "${CASPER_PERSONA_API_KEY:?CASPER_PERSONA_API_KEY is required}"
+      OMBRE_PERSONA_BASE_URL: "${CASPER_PERSONA_BASE_URL:?CASPER_PERSONA_BASE_URL is required}"
+      OMBRE_PERSONA_MODEL: "${CASPER_PERSONA_MODEL:?CASPER_PERSONA_MODEL is required}"
+      OMBRE_REFLECTION_API_KEY: "${CASPER_REFLECTION_API_KEY:-}"
+      OMBRE_REFLECTION_BASE_URL: "${CASPER_REFLECTION_BASE_URL:-}"
+      OMBRE_REFLECTION_MODEL: "${CASPER_REFLECTION_MODEL:-}"
+      OMBRE_PORTRAIT_API_KEY: "${CASPER_PORTRAIT_API_KEY:-}"
+      OMBRE_PORTRAIT_BASE_URL: "${CASPER_PORTRAIT_BASE_URL:-}"
+      OMBRE_PORTRAIT_MODEL: "${CASPER_PORTRAIT_MODEL:-}"
+      OMBRE_DREAM_API_KEY: "${CASPER_DREAM_API_KEY:-}"
+      OMBRE_DREAM_BASE_URL: "${CASPER_DREAM_BASE_URL:-}"
+      OMBRE_DREAM_MODEL: "${CASPER_DREAM_MODEL:-}"
+      OMBRE_DASHBOARD_PASSWORD: "${CASPER_DASHBOARD_PASSWORD:-}"
+      OMBRE_INTERNAL_HOOK_TOKEN: "${CASPER_INTERNAL_HOOK_TOKEN:?CASPER_INTERNAL_HOOK_TOKEN is required}"
+      OMBRE_DASHBOARD_SETUP_ENABLED: "false"
+      OMBRE_MCP_AUTH_REQUIRED: "true"
+      OMBRE_MCP_MUTATIONS_ENABLED: "false"
+      OMBRE_CHATGPT_OAUTH_CLIENT_ID: "${CASPER_CHATGPT_OAUTH_CLIENT_ID:-}"
+      OMBRE_CHATGPT_OAUTH_CLIENT_SECRET: "${CASPER_CHATGPT_OAUTH_CLIENT_SECRET:-}"
+      OMBRE_CHATGPT_OAUTH_ACCESS_TOKEN: "${CASPER_CHATGPT_OAUTH_ACCESS_TOKEN:-}"
+      OMBRE_CHATGPT_OAUTH_REFRESH_TOKEN: "${CASPER_CHATGPT_OAUTH_REFRESH_TOKEN:-}"
+      OMBRE_CHATGPT_OAUTH_PUBLIC_BASE_URL: "${CASPER_CHATGPT_OAUTH_PUBLIC_BASE_URL:-}"
+      OMBRE_CHATGPT_OAUTH_PROTECTED_HOSTS: "${CASPER_CHATGPT_OAUTH_PROTECTED_HOSTS:-}"
+    volumes:
+      - type: "bind"
+        source: "/srv/casper-ombre/data"
+        target: "/data"
+        bind:
+          create_host_path: false
+      - type: "bind"
+        source: "/srv/casper-ombre/state"
+        target: "/state"
+        bind:
+          create_host_path: false
+      - type: "bind"
+        source: "/srv/casper-ombre/casper-deploy/config/config.yaml"
+        target: "/app/config.yaml"
+        read_only: true
+        bind:
+          create_host_path: false
+    expose: ["8000"]
+    restart: "unless-stopped"
+    init: true
+    stop_grace_period: "45s"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 128
+    mem_limit: "384m"
+    mem_reservation: "192m"
+    cpus: "0.50"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: ["casper-ombre-net"]
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import http.client, json; connection = http.client.HTTPConnection('127.0.0.1', 8000, timeout=5); connection.request('GET', '/health'); response = connection.getresponse(); payload = json.loads(response.read()); raise SystemExit(0 if response.status == 200 and payload.get('status') == 'ok' else 1)"
+      interval: "30s"
+      timeout: "6s"
+      retries: 3
+      start_period: "60s"
+    labels:
+      com.ombre.project: "casper-ombre"
+      com.ombre.role: "brain"
+      com.ombre.source.sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+
+  casper-ombre-gateway:
+    image: "casper-ombre-source:284c9c7b0e51a0ba0032c7028f705d72458cb304"
+    pull_policy: "never"
+    build:
+      context: ".."
+      dockerfile: "casper-deploy/Dockerfile.production"
+      args:
+        SOURCE_REPOSITORY: "https://github.com/Yinglianchun/Ombre-Brain.git"
+        SOURCE_SHA: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+    container_name: "casper-ombre-gateway"
+    command: ["python", "gateway.py"]
+    environment:
+      OMBRE_CONFIG_PATH: "/app/config.yaml"
+      OMBRE_BUCKETS_DIR: "/data"
+      OMBRE_STATE_DIR: "/state"
+      OMBRE_RUNTIME_CONFIG_PATH: "/state/config.runtime.yaml"
+      OMBRE_TRANSPORT: "streamable-http"
+      TZ: "Asia/Shanghai"
+      OMBRE_API_KEY: "${CASPER_DEHYDRATION_API_KEY:?CASPER_DEHYDRATION_API_KEY is required}"
+      OMBRE_DEHYDRATION_BASE_URL: "${CASPER_DEHYDRATION_BASE_URL:?CASPER_DEHYDRATION_BASE_URL is required}"
+      OMBRE_DEHYDRATION_MODEL: "${CASPER_DEHYDRATION_MODEL:?CASPER_DEHYDRATION_MODEL is required}"
+      OMBRE_EMBEDDING_API_KEY: "${CASPER_EMBEDDING_API_KEY:?CASPER_EMBEDDING_API_KEY is required}"
+      OMBRE_EMBEDDING_BASE_URL: "${CASPER_EMBEDDING_BASE_URL:?CASPER_EMBEDDING_BASE_URL is required}"
+      OMBRE_EMBEDDING_MODEL: "${CASPER_EMBEDDING_MODEL:?CASPER_EMBEDDING_MODEL is required}"
+      OMBRE_RERANKER_API_KEY: "${CASPER_RERANKER_API_KEY:-}"
+      OMBRE_RERANKER_BASE_URL: "${CASPER_RERANKER_BASE_URL:-}"
+      OMBRE_RERANKER_MODEL: "${CASPER_RERANKER_MODEL:-}"
+      OMBRE_PERSONA_API_KEY: "${CASPER_PERSONA_API_KEY:?CASPER_PERSONA_API_KEY is required}"
+      OMBRE_PERSONA_BASE_URL: "${CASPER_PERSONA_BASE_URL:?CASPER_PERSONA_BASE_URL is required}"
+      OMBRE_PERSONA_MODEL: "${CASPER_PERSONA_MODEL:?CASPER_PERSONA_MODEL is required}"
+      OMBRE_DREAM_API_KEY: "${CASPER_DREAM_API_KEY:-}"
+      OMBRE_DREAM_BASE_URL: "${CASPER_DREAM_BASE_URL:-}"
+      OMBRE_DREAM_MODEL: "${CASPER_DREAM_MODEL:-}"
+      OMBRE_GATEWAY_HOST: "0.0.0.0"
+      OMBRE_GATEWAY_PORT: "8010"
+      OMBRE_GATEWAY_TOKEN: "${CASPER_OMBRE_GATEWAY_TOKEN:?CASPER_OMBRE_GATEWAY_TOKEN is required}"
+      CASPER_OPENROUTER_API_KEY: "${CASPER_OPENROUTER_API_KEY:?CASPER_OPENROUTER_API_KEY is required}"
+    volumes:
+      - type: "bind"
+        source: "/srv/casper-ombre/data"
+        target: "/data"
+        bind:
+          create_host_path: false
+      - type: "bind"
+        source: "/srv/casper-ombre/state"
+        target: "/state"
+        bind:
+          create_host_path: false
+      - type: "bind"
+        source: "/srv/casper-ombre/casper-deploy/config/config.yaml"
+        target: "/app/config.yaml"
+        read_only: true
+        bind:
+          create_host_path: false
+    expose: ["8010"]
+    ports: ["127.0.0.1:18202:8010"]
+    restart: "unless-stopped"
+    init: true
+    stop_grace_period: "45s"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 128
+    mem_limit: "512m"
+    mem_reservation: "256m"
+    cpus: "0.75"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: ["casper-ombre-net"]
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import http.client, json; connection = http.client.HTTPConnection('127.0.0.1', 8010, timeout=5); connection.request('GET', '/health'); response = connection.getresponse(); payload = json.loads(response.read()); raise SystemExit(0 if response.status == 200 and payload.get('status') == 'ok' else 1)"
+      interval: "30s"
+      timeout: "6s"
+      retries: 3
+      start_period: "45s"
+    labels:
+      com.ombre.project: "casper-ombre"
+      com.ombre.role: "gateway"
+      com.ombre.source.sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+
+networks:
+  casper-ombre-net:
+    name: "casper-ombre-net"
+    driver: "bridge"

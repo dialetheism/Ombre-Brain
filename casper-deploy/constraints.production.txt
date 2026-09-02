@@ -1,0 +1,2 @@
+# Production-only compatibility constraint for the frozen Ombre source.
+mcp==1.29.0

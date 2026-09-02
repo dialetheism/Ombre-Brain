@@ -1,0 +1,326 @@
+schema_version: 1
+project: "casper-ombre"
+deployment_stage: "C2F1_REPRODUCIBLE_BUILD_SUPPLY_CHAIN_FROZEN_UNSIGNED_RELEASE_VALIDATED"
+
+source:
+  repository: "https://github.com/Yinglianchun/Ombre-Brain.git"
+  branch: "main"
+  sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
+  base_image_original_reference: "python:3.12-slim"
+  base_image_target_platform: "linux/amd64"
+  base_image_multi_arch_index_digest: "sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217"
+  base_image_target_child_manifest_digest: "sha256:a249c9f47e05708dd367f3fe8ada03cf347390fad66fb8b0518c0ef55ae3cb84"
+  base_image_config_digest: "sha256:72a58063c7563c5c64052da2becebce3f25b60055cb351b668c4e2df9153702c"
+  cpython_full_version: "3.12.14"
+  python_abi: "cp312"
+  dockerfile_production_path: "casper-deploy/Dockerfile.production"
+  dockerfile_production_sha256: "f48e319798211f15983eae5c9631511527ce90ba5c2a1ddeaae5b707112515ab"
+  base_image_digest_status: "FROZEN_STATIC_VALIDATED"
+  dependency_lock_path: "casper-deploy/requirements.production.linux-amd64-py312.lock.txt"
+  dependency_lock_sha256: "c4ed5f4bbab75d728e7587cb5d0a0e935f0b38d55493e2f0b2ffae24d7ce49a7"
+  dependency_lock_dependency_count: 40
+  dependency_lock_hashes_complete: true
+  dependency_lock_mcp_pin: "mcp==1.29.0"
+  dependency_lock_controlled_sdist_package: "jieba"
+  dependency_lock_controlled_sdist_version: "0.42.1"
+  dependency_lock_controlled_sdist_artifact_type: "sdist"
+  dependency_lock_controlled_sdist_sha256: "055ca12f62674fafed09427f176506079bc135638a14e23e25be909131928db2"
+  dependency_lock_controlled_sdist_scope: "jieba==0.42.1_only"
+  dependency_lock_general_sdist_allowed: false
+  dependency_lock_status: "FROZEN_STATIC_VALIDATED"
+  casper_image_build_status: "LOCAL_CANDIDATE_BUILT_STATIC_REVIEWED"
+  casper_candidate_image_tag: "casper-ombre-brain:c2g10l-local-candidate-284c9c7"
+  casper_candidate_image_id: "sha256:dc538274cbd7a33cdc1a23ed75b9719069365e1a75933d51ce51eab595b25cb7"
+  casper_candidate_image_repo_digest: "casper-ombre-brain@sha256:dc538274cbd7a33cdc1a23ed75b9719069365e1a75933d51ce51eab595b25cb7"
+  casper_candidate_image_size_bytes: 106514070
+  casper_candidate_image_os: "linux"
+  casper_candidate_image_architecture: "amd64"
+  casper_candidate_image_rootfs_layer_count: 14
+  casper_candidate_image_created_at: "2026-08-29T17:34:33.032196042Z"
+  casper_candidate_build_evidence_path: "C:/Users/LENOVO/AppData/Local/Temp/casper-c2g10l-512e5a19efe8477197f29282da6fe7d0/c2g10l_evidence.json"
+  casper_candidate_build_command_count: 1
+  casper_candidate_build_exit_code: 0
+  casper_candidate_image_local_only: true
+  casper_candidate_image_deployed: false
+  casper_candidate_image_run_status: "NOT_RUN"
+  casper_candidate_image_push_status: "NOT_PUSHED"
+  casper_production_deploy_status: "NOT_DEPLOYED"
+  casper_runtime_verify_status: "NOT_VERIFIED"
+  prompt_cache_validation_status: "BLOCKED_NO_SAFE_GATEWAY_TOKEN_SOURCE"
+
+runtime:
+  compose_project: "casper-ombre"
+  brain_container: "casper-ombre-brain"
+  gateway_container: "casper-ombre-gateway"
+  network: "casper-ombre-net"
+  data_path: "/srv/casper-ombre/data"
+  state_path: "/srv/casper-ombre/state"
+  brain_command: ["python", "server.py"]
+  gateway_command: ["python", "gateway.py"]
+  brain_transport: "streamable-http"
+  brain_host_publish: false
+  brain_container_port: 8000
+  gateway_bind: "127.0.0.1"
+  gateway_host_port: 18202
+  gateway_container_port: 8010
+  runtime_config_path: "/state/config.runtime.yaml"
+  fresh_runtime_override_policy: "MUST_BE_ABSENT"
+  dashboard_gateway_admin_bridge: false
+
+policy:
+  daily_chat_memory_mode: "off"
+  automatic_memory_mode: "off"
+  persona: "ENABLED_MINIMAL_AFFECT_CONTINUITY_NO_EVENT_TRACE"
+  conflict_nudge_enabled: false
+  reflection_enabled: false
+  daily_impression_enabled: false
+  portrait: "MANUAL_OPT_IN_HANDOFF_STATE_NO_BACKGROUND_GENERATION"
+  portrait_enabled: true
+  portrait_auto_enabled: false
+  portrait_daily_enabled: false
+  dream_enabled: false
+  raw_event_retention: "KEEP_UNTIL_EXPLICIT_POLICY_DEFINED"
+  prompt_cache: "SESSION_BOUND_KEY_DEFAULT_ONLY_NO_RETENTION_NO_EXPLICIT_BREAKPOINTS"
+  prompt_cache_key_session_bound: true
+  explicit_cache_breakpoints: false
+  explicit_cache_ttl: false
+  openrouter_e2e_cache_hit_validation_required: true
+  session_header: "X-Ombre-Session-Id"
+  shared_default_session_unacceptable: true
+  just_now_cross_session: "KEEP_PROFILE_GLOBAL_RECENT_CONTINUITY"
+  just_now_window_hours: 6
+  just_now_max_candidates: 20
+  just_now_max_injected: 5
+  just_now_budget: 420
+  rikkahub_static_custom_header_supported: true
+  rikkahub_dynamic_ombre_session_header: "UNSUPPORTED"
+  rikkahub_conversation_id_available_to_request_layer: false
+  rikkahub_session_patch_designed: true
+  rikkahub_session_patch_runtime_validated: true
+  rikkahub_patch_exact_apply_validated: true
+  rikkahub_patch_dataflow_validated: true
+  rikkahub_patch_build_validated: true
+  rikkahub_dynamic_header_template: "{{conversation_id}}"
+  rikkahub_session_blocker_resolved: true
+  production_patched_rikkahub_client_ready: false
+  recommended_session_solution: "OPTION_D_MINIMAL_RIKKAHUB_CONVERSATION_ID_HEADER_ENHANCEMENT"
+  decay_archive_threshold: 0.0
+  decay_lambda: 0.0
+  decay_auto_resolve_enabled: false
+  decay_auto_resolve_upstream_default: true
+  decay_auto_resolve_patch_designed: true
+  decay_auto_resolve_runtime_validated: true
+  decay_auto_resolve_status: "AUTO_RESOLVE_RUNTIME_FIXTURE_VALIDATED"
+  decay_auto_resolve_blocker_resolved: true
+  decay_archive_disabled_by_threshold_zero: true
+  decay_lambda_zero_age_invariant: false
+  decay_scoring_semantics_unchanged: true
+  decay_archive_semantics_unchanged: true
+  decay_freshness_time_weight_age_sensitive: true
+  freshness_policy: "ACCEPT_RECENCY_RANKING_WITH_NO_DESTRUCTIVE_MEMORY_MUTATION"
+  freshness_policy_blocker_resolved: true
+  automatic_decay_effectively_disabled: false
+
+upstream:
+  protocol: "openai"
+  base_url: "https://openrouter.ai/api/v1"
+  public_model: "casper-gpt-5.4"
+  actual_model: "openai/gpt-5.4"
+  model_status: "FROZEN"
+  model_frozen: true
+  api_key_env: "CASPER_OPENROUTER_API_KEY"
+
+client_audit:
+  repository: "https://github.com/rikkahub/rikkahub.git"
+  branch: "master"
+  sha: "8dc3ebce3f422a422013097447234e4a97db4210"
+  static_custom_header_supported: true
+  dynamic_ombre_session_header: "UNSUPPORTED"
+  conversation_id_available_to_request_layer: false
+  session_patch_designed: true
+  session_patch_runtime_validated: true
+  patch_exact_apply_validated: true
+  patch_dataflow_validated: true
+  patch_build_validated: true
+  header_template_tests: "PASS_10_OF_10"
+  kotlin_compile_validation: "PASS"
+  debug_apk_build: "PASS"
+  private_device_runtime_validation: "PASS_C2D2B"
+  same_conversation_multiround_stable: true
+  different_conversations_isolated: true
+  app_restart_session_persistent: true
+  fast_sequential_switch_isolated: true
+  no_session_header_absent: true
+  static_header_regression_pass: true
+  build_toolchain_blocker: "NONE"
+  portable_launcher_java_version: "17.0.20"
+  gradle_daemon_java_version: "21.0.10"
+  gradle_daemon_java_vendor: "JetBrains"
+  gradle_daemon_java_archive_sha256: "37f8cd307f79283392d1eef9eb4782838c2b5688cdc35ec26c029cf0fd82fbcb"
+  java_kotlin_bytecode_target: 17
+  gradle_wrapper_version: "9.5.0"
+  android_compile_sdk: 37
+  android_target_sdk: 37
+  android_build_tools: "36.0.0"
+  android_ndk: "28.2.13676358"
+  android_cmake: "3.22.1"
+  debug_apk_application_id: "me.rerere.rikkahub.debug"
+  release_application_id: "me.rerere.rikkahub"
+  debug_apk_parallel_install_expected: true
+  debug_apk_sha256: "6572928a7fad57cf8bf119a8daf910f37fcdc9966d6cf0d0b80ba4b57a383e27"
+  debug_apk_firebase_configuration: "NON_PRODUCTION_LOCAL_PLACEHOLDER"
+  official_application_id: "me.rerere.rikkahub"
+  production_application_id: "me.rerere.rikkahub.casper"
+  production_display_name: "RikkaHub Casper"
+  production_private_uri_scheme: "rikkahub-casper"
+  production_application_id_collision_free: true
+  parallel_install_with_official_supported_by_design: true
+  packaging_strategy: "EXISTING_RELEASE_VARIANT_WITH_DEDICATED_BUILD_CONFIGURATION_PATCH"
+  packaging_patch_required: true
+  packaging_patch_created: true
+  packaging_patch_sha256: "af02a95fe468ef592c63601964b98ca3dd11bb43c627d594b76e8c4828eedaf2"
+  packaging_patch_exact_apply: true
+  packaging_patch_offset_count: 0
+  packaging_patch_fuzz_count: 0
+  packaging_patch_changed_file_count: 7
+  packaging_gradle_configuration_parsed: true
+  packaging_release_compile: "PASS_STRICT_LOCKED_CLEAN_COPY"
+  production_release_resource_merge: "PASS"
+  production_release_manifest_merge: "PASS"
+  unsigned_release_apk_created: true
+  unsigned_release_arm64_apk_path: "EXTERNAL_BUILD_OUTPUT_NOT_IN_BUNDLE"
+  unsigned_release_arm64_apk_sha256: "a58ecc6f8485504883d65c686d3d7654bfc34732d691e8746dd0fcc37035ea6b"
+  signing_gate_reached_cleanly: true
+  signing_strategy: "USER_OWNED_LONG_LIVED_KEYSTORE_ENV_INJECTED_OUTSIDE_GIT_AND_VPS"
+  signing_environment:
+    - "CASPER_RIKKAHUB_KEYSTORE_PATH"
+    - "CASPER_RIKKAHUB_KEYSTORE_PASSWORD"
+    - "CASPER_RIKKAHUB_KEY_ALIAS"
+    - "CASPER_RIKKAHUB_KEY_PASSWORD"
+  real_keystore_created: false
+  signing_secret_in_git: false
+  firebase_core_chat_required: false
+  firebase_production_policy: "REMOVE_ANALYTICS_CRASHLYTICS_AND_GOOGLE_SERVICES_APP_PLUGIN_NO_FIREBASE_PROJECT"
+  firebase_placeholder_production_acceptable: false
+  firebase_blocker_resolved: true
+  firebase_analytics_present_in_casper_build: false
+  firebase_crashlytics_present_in_casper_build: false
+  google_services_project_required: false
+  firebase_mlkit_transitive_support_artifacts_remain: true
+  provider_migration_capability: "PROVIDER_ONLY_QR_OR_TEXT_AVAILABLE_SECRET_BEARING_MODELS_EXCLUDED_NO_SELECTIVE_FULL_BACKUP_IMPORT"
+  provider_migration_strategy: "MANUAL_MINIMUM_PROVIDER_SETUP_OR_USER_CONTROLLED_PER_PROVIDER_SHARE_THEN_RECREATE_MODELS"
+  official_private_db_copy_required: false
+  upgrade_policy: "PIN_NEW_UPSTREAM_SHA_REAUDIT_EXACT_APPLY_OR_REBASE_RETEST_SAME_APP_ID_AND_KEY"
+  patch_rebase_required_on_upstream_change: true
+  silent_fuzzy_patch_allowed: false
+  session_patch_production_variant_compatible_by_design: true
+  provenance_policy: "UPSTREAM_SHA_PLUS_SESSION_PACKAGING_REPRODUCIBILITY_PATCH_SHA256_PLUS_TOOLCHAIN_VERSIONS_PLUS_APK_SHA256"
+  reproducibility_patch_created: true
+  reproducibility_patch_sha256: "81eb44e39a9fc8a099016870ff382980c459b1510cecb6334fb9281c0f388293"
+  reproducibility_patch_changed_file_count: 19
+  reproducibility_patch_exact_apply: true
+  reproducibility_patch_offset_count: 0
+  reproducibility_patch_fuzz_count: 0
+  gradle_wrapper_distribution_sha256: "553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746"
+  gradle_wrapper_checksum_source: "OFFICIAL_GRADLE_RELEASE_CHECKSUMS"
+  dependency_lock_status: "LOCKED_STRICT"
+  dependency_lock_file_count: 11
+  unlocked_production_configuration_count: 0
+  sqlite_android_coordinate: "com.github.rikkahub:sqlite-android:80cedc8888df2fe1d22d7f9bf8d9287f621624be"
+  sqlite_android_aar_sha256: "e3e571e470dd76bc13fa2c7d89e7b80d3c63396e5a1235c8bd89dd261d407980"
+  maven_local_used_by_required_dependency: false
+  maven_local_production_policy: "EXCLUDED_FROM_CASPER_PRODUCTION_RESOLUTION"
+  dynamic_dependency_count_before: 46
+  dynamic_dependency_count: 0
+  reproducible_build_blocker: "NONE_SUPPLY_CHAIN_INPUT_DRIFT_RESOLVED"
+  reproducible_build_blocker_resolved: true
+  production_client_ready: false
+  production_packaging_blocked: false
+  production_build_and_signing_pending: true
+
+patching:
+  manifest: "casper-deploy/patches/PATCH-MANIFEST.yaml"
+  strategy: "CLEAN_FROZEN_CHECKOUT_VERIFY_APPLY_INDEX_BUILD"
+  patch_apply_failure_policy: "HARD_FAIL"
+  offset_or_fuzz_policy: "REJECT"
+  ombre_runtime_patch_required: true
+  rikkahub_client_patch_required: true
+  rikkahub_production_packaging_patch_required: true
+  rikkahub_production_packaging_patch: "casper-deploy/patches/rikkahub-casper-production-packaging.patch"
+  rikkahub_reproducibility_patch_required: true
+  rikkahub_reproducibility_patch: "casper-deploy/patches/rikkahub-casper-build-reproducibility.patch"
+
+c2c_validation:
+  temporary_sources_outside_main_repository: true
+  rikkahub_patch_check: "PASS_EXACT"
+  rikkahub_patch_offset_count: 0
+  rikkahub_patch_fuzz_count: 0
+  rikkahub_changed_file_count: 2
+  rikkahub_header_template_tests: "PASS_10_OF_10"
+  rikkahub_header_template_test_failures: 0
+  rikkahub_kotlin_compile: "PASS"
+  rikkahub_kotlin_compile_task: ":app:compileDebugKotlin"
+  rikkahub_debug_apk_build: "PASS"
+  rikkahub_debug_apk_task: ":app:assembleDebug"
+  rikkahub_debug_apk_application_id: "me.rerere.rikkahub.debug"
+  rikkahub_debug_apk_sha256: "6572928a7fad57cf8bf119a8daf910f37fcdc9966d6cf0d0b80ba4b57a383e27"
+  rikkahub_debug_apk_signing: "ANDROID_DEBUG"
+  ombre_patch_check: "PASS_EXACT"
+  ombre_patch_offset_count: 0
+  ombre_patch_fuzz_count: 0
+  ombre_decay_fixture: "PASS"
+  decay_case_d1_auto_resolve_disabled: true
+  decay_case_d2_upstream_behavior_preserved: true
+  decay_case_d3_importance5_protected: true
+  decay_case_d4_permanent_protected: true
+  decay_case_d5_pinned_protected: true
+  decay_case_d6_manual_resolve_preserved: true
+  decay_case_d7_raw_events_unaffected: true
+
+execution:
+  embedding: "REMOTE_OPENAI_COMPATIBLE_API"
+  reranker: "REMOTE_RERANK_API_DISABLED_INITIALLY"
+  dehydration: "REMOTE_OPENAI_COMPATIBLE_API"
+  local_large_model_required: false
+
+resource_budget:
+  host_ram_gib: 1.6
+  host_swap_gib: 2
+  host_vcpu: 2
+  brain_mem_limit_mib: 384
+  gateway_mem_limit_mib: 512
+  combined_mem_limit_mib: 896
+  combined_cpu_limit: 1.25
+
+blocking_configuration:
+  - "All required API credentials and provider endpoints/models"
+  - "User-owned long-lived Android signing key and production release build"
+  - "Production RikkaHub artifact inspection and minimal non-destructive smoke test"
+  - "User-controlled minimal provider migration into the distinct Casper app"
+  - "RikkaHub prompt_cache_key behavior"
+  - "OpenRouter field, streaming, tools, and prompt-cache end-to-end compatibility"
+  - "Persona provider response_format=json_object compatibility"
+  - "Future Casper Gateway public hostname and reverse-proxy policy"
+  - "Final old Ombre and 8000/18080 chain revalidation before VPS mutation"
+
+static_acceptance:
+  yaml_parse: "PASS"
+  compose_structure: "PASS"
+  compose_cli: "NOT_AVAILABLE_ON_C2_HOST"
+  shell_syntax: "PASS"
+  python_ast_compile: "PASS"
+  patch_parse: "PASS"
+  patch_apply_dry_run: "PASS"
+  patch_exact_apply: "PASS"
+  ombre_decay_runtime_fixture: "PASS"
+  rikkahub_build_feasibility: "PASS_LOCAL_DEBUG_APK_AND_C2D2B_DEVICE_RUNTIME"
+  rikkahub_production_packaging_patch: "PASS_EXACT_APPLY_ZERO_OFFSET_ZERO_FUZZ"
+  rikkahub_production_packaging_gradle_parse: "PASS"
+  rikkahub_reproducibility_patch: "PASS_EXACT_APPLY_ZERO_OFFSET_ZERO_FUZZ"
+  rikkahub_dependency_locking: "PASS_STRICT_11_LOCK_FILES"
+  rikkahub_dynamic_dependency_scan: "PASS_ZERO_AFTER"
+  rikkahub_production_release_compile: "PASS"
+  rikkahub_production_release_resource_merge: "PASS"
+  rikkahub_production_release_manifest_merge: "PASS"
+  rikkahub_unsigned_release_apk: "PASS"
+  secret_scan: "PASS"
