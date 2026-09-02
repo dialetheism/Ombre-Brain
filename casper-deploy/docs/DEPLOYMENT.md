@@ -12,11 +12,15 @@ No VPS, Cloudflare, OpenRouter, or model provider was contacted. The technical
 session blocker is resolved. C2E freezes a production-safe, separately packaged
 client design, but no production signing key or release APK exists yet.
 
-Frozen source:
+Frozen source/build baseline:
 
 - repository: https://github.com/Yinglianchun/Ombre-Brain.git
 - branch: main
 - SHA: 284c9c7b0e51a0ba0032c7028f705d72458cb304
+
+This SHA is the frozen reviewed source/build baseline for this recorded bundle.
+It is not the current local repository HEAD after the C2G10 construction-line
+commits.
 
 The intended VPS checkout root is /srv/casper-ombre. The bundle remains at
 /srv/casper-ombre/casper-deploy, while the two persistent paths are:
@@ -98,8 +102,9 @@ The production supply-chain inputs are now statically frozen and validated:
   hash-complete production dependency graph.
 
 These local facts do not make deployment ready. The candidate remains local,
-has not been run, pushed, transferred, loaded on a target host, or deployed,
-and a frozen Git SHA or OCI revision label alone is still not image identity.
+has not been run, registry-pushed, transferred, loaded on a target host, or
+deployed, and a frozen Git SHA or OCI revision label alone is still not image
+identity.
 
 ## Runtime configuration precedence
 
@@ -520,11 +525,32 @@ upstream readiness, provider credentials, or any end-to-end model request.
 
 ## C2G10 source identity and no-deploy rollout gate
 
-The reviewed source baseline is HEAD
-`284c9c7b0e51a0ba0032c7028f705d72458cb304`. C2G10E adds a local, unstaged
-`server.py`-only diff of 238 insertions and 24 deletions. That working-tree
-identity is review evidence only: it is not a deployed image identity and does
-not make current production patched or production-ready.
+The reviewed source/build baseline remains HEAD
+`284c9c7b0e51a0ba0032c7028f705d72458cb304`. That marker records the
+historical C2G10E review baseline, not the current repository HEAD. At the time
+of the C2G10E review, the auth hardening existed as a local `server.py`-only
+diff of 238 insertions and 24 deletions; it is no longer the current repository
+state.
+
+The current Casper construction line is local `main` at
+`650efba18da50f1a884e40ec83a5332dae21475c`. The construction-line commits
+after `284c9c7` are:
+
+- `bd8c555` Add safe auth-check hook
+- `3aa3d83` Add Casper Ombre deploy bundle and restart coverage artifacts
+- `c6597ba` Document Casper source identity and static gaps
+- `650efba` Add internal hook token secret placeholder
+
+This construction line has been pushed to `myfork/main` at
+`https://github.com/dialetheism/Ombre-Brain.git`. `origin` remains
+`https://github.com/Yinglianchun/Ombre-Brain.git` as the author/upstream
+reference remote, and this record does not state or imply a push to `origin`.
+`https://github.com/P0luz/Ombre-Brain` remains historical upstream/original
+reference only, not the active installed baseline.
+
+These source identities are review and backup evidence only: they are not a
+deployed image identity and do not make current production patched or
+production-ready.
 
 The source-only gate below is historical context. Its build and immutable-image
 recording steps are complete for the reviewed C2G10L local candidate; they do
@@ -570,8 +596,11 @@ The reviewed local-only candidate is:
 - OS/architecture: `linux/amd64`
 - local-only: `true`
 - run status: `NOT_RUN`
-- push status: `NOT_PUSHED`
+- Docker image/registry push status: `NOT_PUSHED`
 - deployed: `false`
+
+This `NOT_PUSHED` field is the Docker image/registry status only. It is not the
+Git commit backup status for `myfork/main`.
 
 The current compose.yaml still references the old shared
 `casper-ombre-source:284c9c7...` tag and retains build blocks for both Brain and
