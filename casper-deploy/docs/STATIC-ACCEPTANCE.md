@@ -200,3 +200,25 @@ production deployment readiness.
 ## Restart Coverage Boundary Note
 
 For restart-coverage ledger purposes, this document records static expectations only. Preflight and healthcheck references are bounded operator checks that require separate authorization before execution. Restart-coverage validation does not execute scripts, tests, Docker, Gateway, network calls, or runtime services, and does not claim preflight success, healthcheck success, static-acceptance execution success, build success, Docker success, restart success, Gateway runtime readiness, production readiness, deployment readiness, or old Ombre safety. Secret and environment values must remain outside Git and must not be read or printed during static validation.
+
+## Source Identity and Static Gap Note
+
+The active local construction source for this Casper line is
+`https://github.com/Yinglianchun/Ombre-Brain.git`, as recorded by the local
+repository origin and the committed C2G10 bundle metadata.
+`https://github.com/Yinglianchun/Haven-Ombre` exists and appears related,
+likely as a mirror, old name, or display variant, but it is not the sole
+installed baseline for this line unless future evidence proves that.
+`https://github.com/P0luz/Ombre-Brain` remains the historical upstream/original
+reference only.
+
+C2G10 currently captures static handoff, deploy, and restart-readiness
+artifacts only. It does not validate runtime restart success, Gateway runtime
+readiness, production or deployment readiness, Docker build success, dependency
+installation success, broad provider/model cache support, or any direct
+upstream merge/chase path.
+
+Future work must not directly pull or merge the P0luz upstream into this line.
+Upstream changes require a separate read-only impact audit before any minimal
+patch plan. Push authorization remains separate and must name the remote,
+branch or ref, and push-only scope before any push is attempted.
