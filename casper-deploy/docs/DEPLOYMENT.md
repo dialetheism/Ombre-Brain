@@ -105,6 +105,34 @@ The production supply-chain inputs are now statically frozen and validated:
   requirements.production.txt and constraints-production.txt are not current
   canonical filenames unless a future note marks them historical.
 
+### No-build dependency lock contract
+
+Operators should treat `requirements.production.linux-amd64-py312.lock.txt`
+as the canonical production install input and `constraints.production.txt` as
+a minimal, subordinate source or regeneration overlay, not a complete
+production install input unless a future authorized documentation update says
+otherwise. The older names `requirements.production.txt` and
+`constraints-production.txt` are non-current unless explicitly historical.
+
+The lock is scoped to `linux/amd64` plus CPython 3.12 / `cp312`.
+`Dockerfile.production` installs that platform lock with `--require-hashes`.
+Current static inspection and the manifest record dependency count and hash
+completeness, but that is not dependency install proof, Docker build proof, or
+runtime proof. Preserve `--require-hashes` and full hash coverage.
+
+Future lock regeneration requires a separate explicitly authorized
+resolver/network stage naming the exact environment, toolchain pins, package
+index targets, files allowed to change, and stop conditions. Review lock
+changes as text before any install or build, including package additions or
+removals, version changes, hash deltas, dependency count, sdist exceptions,
+Dockerfile references, and manifest or documentation updates. Registry
+freshness, yanked-package status, and security checks require separate
+explicit network authorization.
+
+This no-build dependency lock contract does not prove Docker build success,
+dependency install success, Gateway runtime readiness, or production readiness.
+Old Ombre remains out of scope and must not be touched.
+
 These local facts do not make deployment ready. The candidate remains local,
 has not been run, registry-pushed, transferred, loaded on a target host, or
 deployed. The base-image digest and dependency lock are static/frozen
