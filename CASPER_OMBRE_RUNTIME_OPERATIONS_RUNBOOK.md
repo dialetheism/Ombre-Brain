@@ -135,6 +135,39 @@ not rely on the historical L96 HEAD alone.
 - Abort conditions: `<EXACT_ABORT_CONDITIONS>`
 - Required final report evidence: `<EXACT_REDACTED_EVIDENCE_FIELDS>`
 
+### Future local/non-production Gateway preflight checklist
+
+C2G10L102 planned this checklist from local HEAD
+`bbb05f9bd4186f553e9b4fed3048e95b8d3b389d`; that HEAD is historical plan
+provenance only. Future execution must re-observe current Git state and must
+not rely on the historical L102 HEAD alone. Passing preflight only permits
+considering a later separately authorized local/non-production dry run; it does
+not prove Gateway runtime readiness.
+
+- Git state: expected HEAD, latest commit, branch/tracking, clean status,
+  remotes, and ahead/behind must match the future authorization.
+- Source identity: confirm local construction source, `myfork` writable backup,
+  `origin` author/upstream reference only, and no P0luz/upstream chase.
+- Documentation boundary: this Gateway prerequisite section and authorization
+  template must be present before execution.
+- Secret placeholders: names only; future `SET/MISSING` only; no values,
+  lengths, headers, rendered env, or full env contents.
+- Target identity: exact local/non-production Gateway target descriptor required
+  before execution.
+- Route/method authorization: exact path list and method-by-path allowlist
+  required before execution.
+- Request budget: total request cap required; no retries beyond cap.
+- Provider/OpenRouter: default `NO`; paid request cap default `0`; separate
+  provider/model authorization required if ever used.
+- Production/Docker/restart: production `NO`; Docker/build/test/script/hook
+  `NO`; restart/deploy `NO`.
+- Old Ombre: `FORBIDDEN`.
+- Abort-before-contact: stop before runtime/Gateway contact on ambiguity,
+  drift, missing cap, secret exposure risk, target mismatch, or unapproved
+  scope.
+- Evidence: final report must use redacted evidence only and must not leak
+  secrets.
+
 Still unvalidated in this validation line:
 
 - no runtime restart success has been proven;
