@@ -133,6 +133,76 @@ This no-build dependency lock contract does not prove Docker build success,
 dependency install success, Gateway runtime readiness, or production readiness.
 Old Ombre remains out of scope and must not be touched.
 
+### Base image digest refresh authorization envelope
+
+This future human authorization envelope is for base image digest refresh /
+registry freshness verification. It does not authorize registry contact,
+Docker pull/build/image inspection, or any Docker action by itself, and it does
+not imply that fresh registry validation has already occurred.
+
+- Current tracked Dockerfile base image:
+  `python@sha256:a249c9f47e05708dd367f3fe8ada03cf347390fad66fb8b0518c0ef55ae3cb84`
+- Original reference: `python:3.12-slim`
+- Platform: `linux/amd64`
+- Multi-arch index digest:
+  `sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217`
+- Target child manifest digest:
+  `sha256:a249c9f47e05708dd367f3fe8ada03cf347390fad66fb8b0518c0ef55ae3cb84`
+- Config digest:
+  `sha256:72a58063c7563c5c64052da2becebce3f25b60055cb351b668c4e2df9153702c`
+- CPython/version/ABI: `3.12.14`, `cp312`
+- Current status: `FROZEN_STATIC_VALIDATED`
+- Meaning: static/frozen provenance only, not fresh registry validation.
+
+Default denied posture: registry contact `NO` unless separately and explicitly
+authorized later; Docker pull `NO`; Docker build `NO`; Docker image inspection
+`NO` unless separately and explicitly authorized later; Docker tag creation
+`NO`; Docker run / Compose `NO`; dependency install / pip / resolver `NO`;
+compose.yaml mutation `NO`; manifest.yaml mutation `NO` unless a later
+post-evidence patch is explicitly authorized; docs mutation `NO` unless a later
+post-evidence patch is explicitly authorized; deploy/restart/runtime validation
+`NO`; Gateway/OpenRouter/production contact `NO`; old Ombre `FORBIDDEN`.
+
+Future phase split: static preflight observes only Git and tracked files, with
+no network, Docker, production, or old-Ombre contact; optional registry
+freshness lookup is allowed only with explicit future network/registry
+authorization naming registry source, image reference, platform, and stop
+conditions; optional digest comparison is allowed only after lookup evidence
+exists; optional docs/manifest patch planning is readonly and only for changed
+or newly recorded evidence; optional post-evidence docs/manifest patching needs
+separate mutation authorization and makes no build/runtime claim; Docker
+pull/build/runtime/deploy phases remain out of scope unless separately
+authorized much later.
+
+Required future evidence: exact human authorization text, observed Git preflight
+state, current tracked base image reference, current tracked digest, platform
+scope, CPython/version/ABI scope, registry source queried if later authorized,
+fresh registry digest result if later authorized, comparison result against the
+tracked digest, whether the digest changed, whether a docs/manifest patch is
+needed, no Docker pull/build/image inspection unless separately authorized, no
+dependency install/pip/resolver unless separately authorized, no
+runtime/production contact, no real secret leakage, old-Ombre no-touch
+statement, and a redacted final report.
+
+Abort on HEAD drift, dirty worktree, remote mismatch, branch/tracking mismatch,
+ahead/behind mismatch, ambiguous base image reference, ambiguous tracked digest,
+ambiguous platform scope, ambiguous registry source, registry contact without
+explicit future authorization, Docker pull/build/image inspection without
+explicit future authorization, Docker tag creation without explicit future
+authorization, package registry/pip/resolver/install without explicit future
+authorization, compose/manifest/docs mutation without explicit future
+authorization, deploy/restart/runtime/Gateway/OpenRouter/production contact,
+old-Ombre involvement, real secret exposure risk, or unexpected output that
+would require continuing anyway instead of stopping.
+
+Documenting this envelope does not prove fresh base image registry validation,
+Docker pull, Docker build freshness, Docker tag creation, Docker image
+inspection, Gateway candidate image creation or observation, registry contact,
+image push, deploy, restart, runtime verification, Gateway runtime readiness,
+OpenRouter behavior, production readiness, dependency install, pip/resolver
+execution, tests/scripts/hooks, old-Ombre safety proof, or real secret
+validation.
+
 These local facts do not make deployment ready. The candidate remains local,
 has not been run, registry-pushed, transferred, loaded on a target host, or
 deployed. The base-image digest and dependency lock are static/frozen
