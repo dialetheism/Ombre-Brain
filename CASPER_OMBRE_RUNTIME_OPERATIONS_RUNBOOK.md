@@ -59,6 +59,65 @@ Always start with the least invasive checks:
 
 Keep each troubleshooting task to one symptom, one main goal, and one acceptance target.
 
+## Gateway-path runtime validation prerequisites
+
+C2G10L89 was readonly design only. It was based on local HEAD
+`2b83da2754baf29655c2f2ff7426ee337a305915`; that HEAD is historical L89
+provenance only. Any future validation must re-observe current HEAD, branch,
+git status, remotes, and ahead/behind state before execution.
+
+Static Gateway routes identified for future scoped validation are:
+
+- `/health`
+- `/v1/models`
+- `/v1/chat/completions`
+- `/v1/messages`
+
+Static admin/debug surfaces identified for future scoped review are:
+
+- `/api/config`
+- `/api/debug/injections`
+- `/api/hook/recall`
+- `/api/debug/recall-eval`
+- `/api/debug/upstream-usage`
+
+Placeholder-only boundaries:
+
+- `CASPER_OMBRE_GATEWAY_TOKEN` maps to Gateway client auth.
+- `CASPER_OPENROUTER_API_KEY` is Gateway-side provider auth.
+- `CASPER_INTERNAL_HOOK_TOKEN` maps to Brain internal hook auth.
+
+Brain internal hook paths identified for future scoped validation are:
+
+- `/auth-check-hook`
+- `/breath-hook`
+- `/introspection-hook`
+- `/dream-hook`
+
+Any future real validation requires a fresh human authorization envelope naming:
+
+- environment;
+- exact service/path;
+- allowed secret placeholders by name only;
+- allowed network targets;
+- allowed commands, if any;
+- maximum provider/paid request count;
+- stop/abort conditions.
+
+Still unvalidated in this validation line:
+
+- no runtime restart success has been proven;
+- no Gateway runtime readiness has been proven;
+- no production/deployment readiness has been proven;
+- no Docker/build/dependency-install success has been proven;
+- no broad provider/model cache support has been proven;
+- no OpenRouter call has been made in this validation line;
+- no Gateway call has been made;
+- no target runtime call has been made;
+- no production contact has been made;
+- no old-Ombre check has been made;
+- no real secret presence validation has been performed.
+
 ## 6. Symptom: RikkaHub cannot connect
 
 Likely causes:
