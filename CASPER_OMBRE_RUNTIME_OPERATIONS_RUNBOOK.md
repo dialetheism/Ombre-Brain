@@ -104,6 +104,37 @@ Any future real validation requires a fresh human authorization envelope naming:
 - maximum provider/paid request count;
 - stop/abort conditions.
 
+### Future authorization envelope template
+
+C2G10L96 drafted this template from local HEAD
+`2ec18814a25f395e2a407d36e4c959d8bbf8b507`; that HEAD is historical draft
+provenance only. Future execution must re-observe current Git state and must
+not rely on the historical L96 HEAD alone.
+
+- Environment name: `<LOCAL_OR_NONPROD_ENVIRONMENT_NAME>`
+- Local/non-production Gateway target descriptor:
+  `<AUTHORIZED_LOCAL_OR_NONPROD_GATEWAY_TARGET>`
+- Allowed service/path list: `<EXACT_PATHS_ONLY>`
+- Exact HTTP methods by path: `<PATH_TO_METHOD_ALLOWLIST>`
+- Allowed secret placeholders by name only:
+  `CASPER_OMBRE_GATEWAY_TOKEN`, `CASPER_OPENROUTER_API_KEY`,
+  `CASPER_INTERNAL_HOOK_TOKEN`
+- Secret handling rule: `SET/MISSING` only; never values, lengths, headers,
+  rendered env, or full env-file contents.
+- Allowed network targets: `<EXACT_LOCAL_OR_NONPROD_TARGETS_ONLY>`
+- Allowed readonly command categories: `<EXACT_READONLY_CATEGORIES_ONLY>`
+- Maximum total request count: `<INTEGER_CAP>`
+- Provider/OpenRouter authorization: `YES/NO`, default `NO`
+- Maximum paid provider/OpenRouter request count: `<INTEGER_CAP>`, default `0`
+- Production contact: `NO`
+- Docker/build/test/script/hook execution: `NO`
+- Restart/deploy: `NO`
+- Old Ombre contact: `FORBIDDEN`
+- Required Git preflight: re-observe current HEAD, latest commit,
+  branch/tracking, git status, remotes, and ahead/behind before execution.
+- Abort conditions: `<EXACT_ABORT_CONDITIONS>`
+- Required final report evidence: `<EXACT_REDACTED_EVIDENCE_FIELDS>`
+
 Still unvalidated in this validation line:
 
 - no runtime restart success has been proven;
