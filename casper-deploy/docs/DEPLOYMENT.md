@@ -670,6 +670,47 @@ old-Ombre safety, dependency install, pip/resolver execution,
 tests/scripts/hooks, or real secret validation. Old Ombre remains out of scope
 and must not be touched.
 
+### Gateway immutable candidate identity authorization envelope
+
+This is a placeholder-only future human authorization envelope. It does not
+authorize execution or imply that a Gateway candidate identity already exists.
+
+- Gateway service name: `casper-ombre-gateway`
+- Gateway source SHA: `284c9c7b0e51a0ba0032c7028f705d72458cb304`
+- Gateway Dockerfile path: `casper-deploy/Dockerfile.production`
+- Gateway build context path: `..`
+- Placeholder candidate tag shape:
+  `casper-ombre-gateway:<human-approved-candidate-tag>`
+- Default denied posture: Docker build `NO`, Docker tag creation `NO`,
+  registry contact `NO`, image push `NO`, compose mutation `NO`, manifest
+  mutation `NO`, deploy/restart/runtime validation `NO`, production contact
+  `NO`, old Ombre `FORBIDDEN`, file modification none by default, and network
+  contact none by default.
+- Allowed command categories: none by default unless separately authorized.
+- Allowed files to modify: none by default unless separately authorized.
+- Allowed files to read: tracked docs/static metadata only unless separately
+  authorized.
+- Secret/privacy rules: no real secret values, no env dump, no auth headers,
+  and no rendered env output.
+
+If a later Gateway identity stage is separately authorized, its required
+evidence is Gateway candidate tag, immutable image ID or digest, source SHA,
+Dockerfile path, build context, build evidence, local-only status, run status,
+push status, deploy status, verification status, clean Git state, and a
+redacted final report.
+
+Abort on Git drift, dirty worktree, remote mismatch, ambiguous Gateway source
+SHA, ambiguous candidate tag, missing Dockerfile or build context identity,
+unauthorized Docker tag/build, unauthorized registry contact, unauthorized
+compose or manifest mutation, deploy/restart/runtime/Gateway/OpenRouter/
+production contact, old-Ombre involvement, or real secret exposure risk.
+
+Documenting this envelope does not prove Docker build freshness, Docker tag
+creation, registry push/contact, deploy, restart, runtime verification, Gateway
+runtime readiness, OpenRouter behavior, production readiness, dependency
+install, pip/resolver execution, tests/scripts/hooks, old-Ombre safety proof,
+or real secret validation.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and
