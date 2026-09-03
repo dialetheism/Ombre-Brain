@@ -642,6 +642,34 @@ The current compose.yaml now has Brain separated onto
 `casper-ombre-source:284c9c7...` and still has a build block. The Gateway does
 not yet have a separately recorded immutable Gateway candidate identity.
 
+### Brain/Gateway image identity separation policy
+
+Brain currently has a service-specific local candidate image identity:
+`casper-ombre-brain:c2g10l-local-candidate-284c9c7`. That Brain candidate
+remains local-only, `NOT_RUN`, `NOT_PUSHED`, and not deployed.
+
+Gateway currently remains source-tagged as
+`casper-ombre-source:284c9c7b0e51a0ba0032c7028f705d72458cb304`. It still has a
+build block using `casper-deploy/Dockerfile.production` and
+`SOURCE_SHA=284c9c7...`. Gateway does not yet have a service-specific immutable
+candidate identity.
+
+Future Gateway identity evidence should record the service name, candidate tag,
+immutable image ID or digest, source SHA, build evidence, local-only status, run
+status, push status, and deploy status. Future compose should reference
+distinct immutable Brain and Gateway candidate images only after Gateway
+identity exists. The Gateway build block remains an unresolved blocker until a
+separately authorized compose, manifest, or Docker patch changes it.
+
+Do not claim tag separation until clean Git state, static compose fields,
+manifest and documentation records, exact service-specific tags, immutable IDs
+or digests, and source/build provenance all agree. Tag separation planning does
+not prove Docker build freshness, Docker tag creation, registry push, deploy,
+restart, Gateway runtime readiness, OpenRouter behavior, production readiness,
+old-Ombre safety, dependency install, pip/resolver execution,
+tests/scripts/hooks, or real secret validation. Old Ombre remains out of scope
+and must not be touched.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and
