@@ -195,8 +195,19 @@ production deployment readiness.
 - OpenRouter streaming, tools, request fields, and prompt-cache E2E behavior;
 - future Casper Gateway hostname and reverse-proxy path policy;
 - VPS Docker Compose validation and live RAM/disk headroom;
-- frozen Python base-image digest, dependency lock, and built-image digest;
+- fresh registry digest validation, fresh Docker build, dependency install, and
+  Docker ignore behavior validation;
+- image push `NOT_PUSHED`, deploy `NOT_DEPLOYED`, candidate run `NOT_RUN`, and
+  runtime verify `NOT_VERIFIED`;
 - final old Ombre baseline revalidation immediately before any VPS mutation.
+
+The current static bundle records a pinned Python base-image digest, a
+hash-complete platform dependency lock at
+`requirements.production.linux-amd64-py312.lock.txt`, and the current
+constraint filename `constraints.production.txt`. Those are static/frozen
+provenance only. They do not prove fresh registry state, fresh Docker build
+success, dependency-install success, Docker ignore behavior, Gateway runtime
+readiness, production readiness, or old-Ombre safety.
 ## Restart Coverage Boundary Note
 
 For restart-coverage ledger purposes, this document records static expectations only. Preflight and healthcheck references are bounded operator checks that require separate authorization before execution. Restart-coverage validation does not execute scripts, tests, Docker, Gateway, network calls, or runtime services, and does not claim preflight success, healthcheck success, static-acceptance execution success, build success, Docker success, restart success, Gateway runtime readiness, production readiness, deployment readiness, or old Ombre safety. Secret and environment values must remain outside Git and must not be read or printed during static validation.

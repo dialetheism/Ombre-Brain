@@ -100,11 +100,18 @@ The production supply-chain inputs are now statically frozen and validated:
   digest.
 - requirements.production.linux-amd64-py312.lock.txt contains the frozen,
   hash-complete production dependency graph.
+- constraints.production.txt is the current production constraint file; it
+  records the compatibility pin for mcp. The older names
+  requirements.production.txt and constraints-production.txt are not current
+  canonical filenames unless a future note marks them historical.
 
 These local facts do not make deployment ready. The candidate remains local,
 has not been run, registry-pushed, transferred, loaded on a target host, or
-deployed, and a frozen Git SHA or OCI revision label alone is still not image
-identity.
+deployed. The base-image digest and dependency lock are static/frozen
+provenance only; they are not fresh registry validation, fresh Docker build
+success, dependency-install success, Docker ignore behavior validation, Gateway
+runtime readiness, or production readiness. A frozen Git SHA or OCI revision
+label alone is still not image identity.
 
 ## Runtime configuration precedence
 
@@ -602,25 +609,28 @@ The reviewed local-only candidate is:
 This `NOT_PUSHED` field is the Docker image/registry status only. It is not the
 Git commit backup status for `myfork/main`.
 
-The current compose.yaml still references the old shared
-`casper-ombre-source:284c9c7...` tag and retains build blocks for both Brain and
-Gateway. That tag is not the candidate identity, and current Compose is not yet
-ready for a Brain-only candidate deployment.
+The current compose.yaml now has Brain separated onto
+`casper-ombre-brain:c2g10l-local-candidate-284c9c7`. Gateway remains on
+`casper-ombre-source:284c9c7...` and still has a build block. The Gateway does
+not yet have a separately recorded immutable Gateway candidate identity.
 
 ### Future Brain-only Compose delta
 
-A separately authorized future apply stage must make only this Compose delta:
+This historical delta has already been represented for the Brain image and
+Brain build-block state in current compose.yaml. If a later documentation or
+deployment gate revisits it, it must treat the existing Brain state as the
+baseline and must not broaden into Gateway changes:
 
-1. Change only `casper-ombre-brain.image` to
+1. Confirm `casper-ombre-brain.image` remains
    `casper-ombre-brain:c2g10l-local-candidate-284c9c7`.
-2. Remove only the `casper-ombre-brain` build block.
+2. Confirm the `casper-ombre-brain` build block remains absent.
 3. Preserve the Brain service name, command, environment placeholder names,
    mounts, expose setting, network, healthcheck, resource limits, and labels
    unless a separate stage explicitly authorizes another exact change.
 4. Preserve the complete `casper-ombre-gateway` stanza conceptually unchanged,
    including its image, build block, command, configuration, environment,
    ports, mounts, network, healthcheck, limits, and labels.
-5. Never treat the old shared tag as candidate identity.
+5. Never treat the Gateway's old shared tag as Brain candidate identity.
 6. Make no Nginx, cloudflared, old Ombre, source, manifest, Dockerfile, lock, or
    unrelated Compose change in that stage.
 
