@@ -711,6 +711,60 @@ runtime readiness, OpenRouter behavior, production readiness, dependency
 install, pip/resolver execution, tests/scripts/hooks, old-Ombre safety proof,
 or real secret validation.
 
+### Gateway local-only build/tag evidence authorization envelope
+
+This future human authorization envelope is separate from the placeholder-only
+Gateway immutable candidate identity envelope above. It does not authorize
+Docker/build/tag work by itself and does not imply that a Gateway candidate
+image already exists.
+
+- Human authorization title: `Gateway local-only build/tag evidence authorization`
+- Required Git preflight: exact HEAD, latest commit, `main` tracking
+  `myfork/main`, clean status, expected remotes, `0 ahead / 0 behind`, and
+  immediate re-observation before any future action.
+- Gateway service name: `casper-ombre-gateway`
+- Gateway source SHA: `284c9c7b0e51a0ba0032c7028f705d72458cb304`
+- Gateway Dockerfile: `casper-deploy/Dockerfile.production`
+- Gateway build context: `..`
+- Proposed local-only candidate tag shape:
+  `casper-ombre-gateway:<human-approved-candidate-tag>`
+- Explicit authorization switches: Docker build `YES` only if separately and
+  explicitly authorized later, otherwise `NO`; Docker tag creation `YES` only
+  if separately and explicitly authorized later, otherwise `NO`; Docker image
+  metadata observation `YES` only if separately and explicitly authorized later,
+  otherwise `NO`; Docker run / Compose up `NO` by default; registry contact /
+  image push `NO` by default; compose.yaml mutation `NO` by default;
+  manifest.yaml mutation `NO` by default unless a later post-evidence
+  docs/manifest patch is explicitly authorized; deploy/restart/runtime
+  validation `NO` by default; Gateway/OpenRouter/production contact `NO` by
+  default; old Ombre `FORBIDDEN`.
+- Phase breakdown: preflight-only first; optional local Docker build only with
+  explicit future authorization; optional local image identity observation only
+  with explicit future authorization; optional local Docker tag creation only
+  with explicit future authorization; optional post-evidence docs/manifest patch
+  planning only after evidence exists; registry/image push/deploy/runtime phases
+  remain out of scope unless separately authorized much later.
+- Required future evidence: Gateway candidate tag, immutable local image ID
+  and/or digest, source SHA, Dockerfile path, build context path, build evidence,
+  local-only status, run status, push status, deploy status, verification
+  status, clean Git state, no real secret leakage, old-Ombre no-touch, and a
+  redacted final report.
+- Abort conditions: HEAD drift, dirty worktree, remote mismatch, ambiguous
+  Gateway source SHA, ambiguous candidate tag, missing Dockerfile identity,
+  missing build context identity, Docker unavailable or unexpected Docker
+  context, unauthorized registry contact, unauthorized image push, unauthorized
+  compose/manifest mutation, deploy/restart/runtime/Gateway/OpenRouter/
+  production contact, unauthorized dependency install/pip/resolver/test/script/
+  hook execution, old-Ombre involvement, real secret exposure risk, or
+  unexpected output that would require continuing anyway.
+
+Documenting this local-only build/tag evidence envelope does not prove Docker
+build freshness, Gateway candidate tag creation, Gateway immutable image ID or
+digest, registry contact, image push, deploy, restart, runtime verification,
+Gateway runtime readiness, OpenRouter behavior, production readiness, dependency
+install, pip/resolver execution, tests/scripts/hooks, old-Ombre safety proof, or
+real secret validation.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and
