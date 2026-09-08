@@ -835,6 +835,77 @@ Gateway runtime readiness, OpenRouter behavior, production readiness, dependency
 install, pip/resolver execution, tests/scripts/hooks, old-Ombre safety proof, or
 real secret validation.
 
+### Local-only Docker build authorization envelope
+
+This future human authorization envelope is for local-only Docker build planning.
+It does not authorize Docker build, Docker pull, Docker image inspection, Docker
+tag creation, Docker run, Compose, registry push, deploy, runtime, Gateway,
+OpenRouter, or production contact by itself. It does not imply that a Gateway
+candidate image already exists or that Docker build freshness has been proven.
+
+- Primary future build candidate from tracked files: `casper-ombre-gateway`,
+  because compose.yaml still has a Gateway build block.
+- Gateway build inputs: service `casper-ombre-gateway`, Dockerfile
+  `casper-deploy/Dockerfile.production`, build context `..`, and
+  `SOURCE_SHA=284c9c7b0e51a0ba0032c7028f705d72458cb304`.
+- Exact service-specific human-approved local candidate tag is required before
+  any future build. Brain currently has documented local candidate metadata at
+  `casper-ombre-brain:c2g10l-local-candidate-284c9c7` and remains `NOT_RUN`,
+  `NOT_PUSHED`, `NOT_DEPLOYED`, and `NOT_VERIFIED`; any Brain rebuild requires a
+  separate reason and exact candidate tag.
+- Base image boundary: fresh base image registry validation remains
+  `INCONCLUSIVE / NOT_VALIDATED`; the tracked base image digest remains
+  `FROZEN_STATIC_VALIDATED`, meaning static/frozen provenance only, not fresh
+  registry validation.
+- Default denied posture: network / registry contact `NO` unless separately and
+  explicitly authorized later; Docker pull `NO`; Docker build `NO` unless
+  separately and explicitly authorized later; Docker image inspection `NO` unless
+  separately and explicitly authorized later; Docker tag creation `NO` unless
+  separately and explicitly authorized later; Docker run / Compose `NO`;
+  dependency install / pip / resolver `NO` unless separately and explicitly
+  authorized later; compose.yaml mutation `NO`; manifest.yaml mutation `NO`
+  unless a later post-evidence patch is explicitly authorized; docs mutation
+  after this patch `NO` unless later explicitly authorized; registry push /
+  image push `NO`; deploy/restart/runtime validation `NO`; Gateway/OpenRouter/
+  production contact `NO`; old Ombre `FORBIDDEN`.
+- Future phase split: static Git/repo preflight only; static Dockerfile,
+  compose, and manifest input identity preflight; exact build target selection
+  gate; exact candidate tag approval gate; local Docker build execution gate only
+  with separate explicit future authorization; optional local image metadata
+  observation gate only with separate explicit future authorization; optional
+  docs/manifest patch planning only after evidence exists; runtime/run/Compose
+  validation only with separate explicit future authorization; registry push,
+  deploy, and production phases remain out of scope unless separately authorized
+  much later.
+- Required future evidence if build is later authorized: exact human
+  authorization text, observed Git preflight state, service name, Dockerfile
+  path, build context, SOURCE_SHA/build args, approved service-specific
+  candidate tag, build result and redacted build log if build occurs, local image
+  ID/digest only if image metadata observation is separately authorized, tag
+  status, run status still `NOT_RUN` unless separately authorized, push status
+  still `NOT_PUSHED`, deploy status still `NOT_DEPLOYED`, verification status
+  still `NOT_VERIFIED` unless separately authorized, no secret leakage,
+  old-Ombre no-touch statement, and a redacted final report.
+- Abort on HEAD drift, dirty worktree, branch/tracking mismatch, remote mismatch,
+  ahead/behind mismatch, ambiguous build target, ambiguous service name,
+  ambiguous Dockerfile path, ambiguous build context, ambiguous SOURCE_SHA or
+  build args, ambiguous candidate tag, candidate tag collision with Brain/Gateway
+  naming, candidate tag implying pushed/deployed/runtime-verified status before
+  evidence exists, unexpected Docker pull or network need without explicit
+  authorization, unexpected package registry / pip / resolver / install need
+  without explicit authorization, Docker unavailable or non-local Docker context,
+  Docker image inspection required without explicit authorization, file mutation
+  outside an authorized docs patch, registry push/contact required, Docker
+  run/Compose/runtime required, deploy/restart/production/Gateway/OpenRouter
+  contact required, old-Ombre involvement, real secret exposure risk, or
+  unexpected output requiring continuation instead of stopping.
+
+Documenting this envelope does not prove Docker build freshness, Docker pull,
+Docker image inspection, Docker tag creation, Gateway candidate image creation or
+observation, runtime validation, Gateway/OpenRouter readiness, production
+readiness, dependency install/resolver success, old-Ombre safety, or real secret
+validation.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and
