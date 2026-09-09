@@ -906,6 +906,43 @@ observation, runtime validation, Gateway/OpenRouter readiness, production
 readiness, dependency install/resolver success, old-Ombre safety, or real secret
 validation.
 
+### Gateway local build and image metadata evidence
+
+The Gateway candidate now has human-run normal PowerShell build-only evidence and
+separately observed local image metadata. The build command shape was:
+
+```text
+docker build --pull=false -f casper-deploy/Dockerfile.production --build-arg SOURCE_SHA=284c9c7b0e51a0ba0032c7028f705d72458cb304 -t casper-ombre-gateway:c2g10l-local-candidate-284c9c7 .
+```
+
+- Build status: `PASS_BUILT_NETWORK_ALLOWED_WITH_BOUNDARY_NOTE`
+- Approved candidate tag: `casper-ombre-gateway:c2g10l-local-candidate-284c9c7`
+- Image ID:
+  `sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee`
+- Repo digest:
+  `casper-ombre-gateway@sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee`
+- OS/architecture: `linux/amd64`
+- Created: `2026-08-30T17:46:11.42035904Z`
+- Size: `106514296`
+- Verification status: `IMAGE_METADATA_OBSERVED_ONLY`
+- Run status: `NOT_RUN`
+- Push status: `NOT_PUSHED`
+- Deploy status: `NOT_DEPLOYED`
+
+Boundary notes: Docker Hub metadata/auth contact was observed despite
+`--pull=false`, so zero registry contact must not be claimed. Docker layer pull
+is not proven by the visible build output. The locked pip install step was
+`CACHED`, so fresh dependency install/download is not proven. Full `Config.Env`
+was not printed, and no secret-like values were printed in the narrow metadata
+output. No Docker run, Compose, image push, deploy, or runtime validation
+occurred.
+
+Fresh base image registry validation remains `INCONCLUSIVE / NOT_VALIDATED`.
+Static base image provenance remains `FROZEN_STATIC_VALIDATED`. This evidence
+does not prove runtime readiness, Gateway readiness, OpenRouter behavior,
+production readiness, registry push, deploy readiness, tests/scripts/hooks,
+old-Ombre safety proof, or real secret validation.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and
