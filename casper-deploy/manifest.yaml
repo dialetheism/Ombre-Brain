@@ -56,10 +56,10 @@ source:
   gateway_candidate_image_size_bytes: 106514296
   gateway_candidate_build_status: "PASS_BUILT_NETWORK_ALLOWED_WITH_BOUNDARY_NOTE"
   gateway_candidate_metadata_status: "IMAGE_METADATA_OBSERVED_ONLY"
-  gateway_candidate_run_status: "NOT_RUN"
+  gateway_candidate_run_status: "HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY"
   gateway_candidate_push_status: "NOT_PUSHED"
   gateway_candidate_deploy_status: "NOT_DEPLOYED"
-  gateway_candidate_verification_status: "IMAGE_METADATA_OBSERVED_ONLY"
+  gateway_candidate_verification_status: "HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY"
   gateway_candidate_source_sha: "284c9c7b0e51a0ba0032c7028f705d72458cb304"
   gateway_candidate_dockerfile_path: "casper-deploy/Dockerfile.production"
   gateway_candidate_build_context: "repo root ."
@@ -69,6 +69,35 @@ source:
   gateway_candidate_secret_note: "Full Config.Env was not printed and no secret-like values were printed in the narrow metadata output."
   gateway_candidate_runtime_boundary: "Runtime, Gateway, OpenRouter, and production readiness are not claimed."
   gateway_candidate_base_image_registry_freshness: "INCONCLUSIVE / NOT_VALIDATED"
+  gateway_local_health_smoke_status: "HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY"
+  gateway_local_health_smoke_classification: "health-success-with-cleanup-recovery"
+  gateway_local_health_smoke_execution_stage: "C2G10L194"
+  gateway_local_health_smoke_execution_result: "ABORT_L194_CLEANUP_STOP_FAILED"
+  gateway_local_health_smoke_abort_stage: "CLEANUP_STOP"
+  gateway_local_health_smoke_image_id: "sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee"
+  gateway_local_health_smoke_repo_digest: "casper-ombre-gateway@sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee"
+  gateway_local_health_smoke_baked_config_path: "/app/config.yaml"
+  gateway_local_health_smoke_host_config_bind_used: false
+  gateway_local_health_smoke_network_mode: "none"
+  gateway_local_health_smoke_host_ports_published: false
+  gateway_local_health_smoke_bind_mounts_used: false
+  gateway_local_health_smoke_production_binds_used: false
+  gateway_local_health_smoke_tmpfs_paths: ["/data", "/state", "/tmp"]
+  gateway_local_health_smoke_dummy_env_only: true
+  gateway_local_health_smoke_request_count: 1
+  gateway_local_health_smoke_endpoint: "GET /health (container-internal)"
+  gateway_local_health_smoke_http_status: 200
+  gateway_local_health_smoke_health_status_ok: true
+  gateway_local_health_smoke_provider_requests: 0
+  gateway_local_health_smoke_openrouter_contacted: false
+  gateway_local_health_smoke_paid_requests: 0
+  gateway_local_health_smoke_initial_cleanup_succeeded: false
+  gateway_local_health_smoke_final_git_clean: "NOT_OBSERVED"
+  gateway_local_health_smoke_cleanup_recovery_stage: "C2G10L195"
+  gateway_local_health_smoke_cleanup_recovery_result: "PASS_CLEANUP_ALREADY_ABSENT"
+  gateway_local_health_smoke_final_absent: true
+  gateway_local_health_smoke_cleanup_recovered: true
+  gateway_local_health_smoke_config_boundary: "casper-deploy/config/config.yaml remained untracked/ignored and was not read or bound; baked config correctness, secret-freedom, and production equivalence are not claimed."
   prompt_cache_validation_status: "BLOCKED_NO_SAFE_GATEWAY_TOKEN_SOURCE"
 
 runtime:

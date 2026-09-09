@@ -168,19 +168,42 @@ not prove Gateway runtime readiness.
 - Evidence: final report must use redacted evidence only and must not leak
   secrets.
 
+### Recorded C2G10L194/L195 local baked-config evidence
+
+The current bounded local evidence state is
+`HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`.
+
+C2G10L194 used direct `docker run`, not Compose, for the exact local Gateway
+candidate. Image identity, baked-config static contract, network-none,
+no-host-port, no-bind, no-production-bind, and expected-tmpfs metadata matched.
+The ignored host config was not read or mounted. One container-internal
+`GET /health` returned HTTP `200` with `status=ok`; provider/OpenRouter/paid
+request counts were `0`.
+
+L194's overall result remained `ABORT_L194_CLEANUP_STOP_FAILED`. C2G10L195
+later confirmed the exact temporary container was already absent. Record this
+as `health-success-with-cleanup-recovery`, not a clean single-pass smoke PASS.
+
+This observation authorizes no repeat request, `/v1/models`, Bearer check,
+chat, streaming, tools, provider call, Compose operation, restart, deployment,
+production contact, or old-Ombre contact.
+
 Still unvalidated in this validation line:
 
-- no runtime restart success has been proven;
-- no Gateway runtime readiness has been proven;
-- no production/deployment readiness has been proven;
-- no Docker/build/dependency-install success has been proven;
-- no broad provider/model cache support has been proven;
-- no OpenRouter call has been made in this validation line;
-- no Gateway call has been made;
-- no target runtime call has been made;
-- no production contact has been made;
-- no old-Ombre check has been made;
-- no real secret presence validation has been performed.
+- no runtime restart success or full Gateway readiness has been proven;
+- no production/deployment or Compose readiness has been proven;
+- no Gateway endpoint other than one isolated container-internal
+  `GET /health` has been checked;
+- no `/v1/models`, Bearer/client authentication, chat, messages, streaming,
+  tools, prompt-cache, admin, mutation, memory, or hook behavior has been
+  validated;
+- no provider or OpenRouter call has been made;
+- no target or production runtime contact has been made;
+- no real secret, formal persistence, or production-config validation has been
+  performed;
+- no old-Ombre check or safety proof has been made;
+- fresh dependency installation and fresh base-image registry validation remain
+  unproven.
 
 ## 6. Symptom: RikkaHub cannot connect
 

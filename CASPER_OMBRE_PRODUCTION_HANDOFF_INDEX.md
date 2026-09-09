@@ -1,6 +1,6 @@
 # Casper Ombre Production Handoff Master Index
 
-Last documentation update: 2026-08-27
+Last documentation update: 2026-09-09
 
 This file is the non-secret master handoff index for Casper Ombre-Brain. It records previously verified production and handoff facts; it is not a live VPS check. This document does not authorize any operational next stage.
 
@@ -12,6 +12,7 @@ This file is the non-secret master handoff index for Casper Ombre-Brain. It reco
 - Patched RikkaHub 2.4.9 uses each persisted conversation ID as `X-Ombre-Session-Id`, keeping different conversations in different Casper sessions.
 - The C2G10E `server.py` application-layer hardening patch exists only in the local working tree and has not been built or deployed.
 - Current production therefore remains on the pre-hardening source until credential provisioning, build, deployment, and the required Casper restart are separately authorized and completed.
+- Separate local-only Gateway candidate evidence is classified `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`. It did not contact, deploy, restart, or validate production and does not alter the current production image or configuration.
 
 ## 2. Completed verification stages
 
@@ -25,6 +26,8 @@ This file is the non-secret master handoff index for Casper Ombre-Brain. It reco
 - `C2G10F`: read-only patch review — `PASS`; the tracked diff remained only `server.py`, existing auth boundaries were not weakened, and the source was ready for a documentation/configuration stage only.
 - `C2G10G`: read-only documentation/configuration planning — `PASS`; it authorized an exact five-file, no-secret C2G10H scope.
 - `C2G10H`: this stage updates only the five approved non-secret documentation/configuration files; it performs no source change, credential provisioning, build, network request, restart, or deployment.
+- `C2G10L194`: the exact local Gateway candidate started under isolated, dummy-environment, no-host-port, no-bind, network-none boundaries; one container-internal `/health` returned HTTP `200` with `status=ok`. The stage ended `ABORT_L194_CLEANUP_STOP_FAILED`, so it is not a clean single-pass PASS.
+- `C2G10L195`: cleanup-only exact-container verification returned `PASS_CLEANUP_ALREADY_ABSENT`, with `final_absent=true` and `cleanup_succeeded=true`. Combined L194/L195 classification: `health-success-with-cleanup-recovery`.
 
 ## 3. Local paths
 

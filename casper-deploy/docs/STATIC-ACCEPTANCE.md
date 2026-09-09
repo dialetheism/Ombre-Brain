@@ -178,11 +178,37 @@ paths, Compose structure, env references, no local large model, and no secret
 material. YAML parsing, Python compile, Git Bash shell syntax, patch scan, and
 repository contamination checks all remain mandatory.
 
-Docker and Docker Compose were not invoked. C2D2B adds private-device proof of
-same-conversation stability, cross-conversation isolation, restart persistence,
-no-header absence, and static-header compatibility. It does not mean the debug
-APK is a production client, nor does it establish real-provider, VPS, or
-production deployment readiness.
+The bundle-validation pass described above did not invoke Docker or Docker
+Compose. Separately authorized C2G10L194/L195 local evidence is recorded below;
+it does not convert this static acceptance record into production or deployment
+readiness. C2D2B adds private-device proof of same-conversation stability,
+cross-conversation isolation, restart persistence, no-header absence, and
+static-header compatibility. It does not mean the debug APK is a production
+client, nor does it establish real-provider, VPS, or production deployment
+readiness.
+
+## Gateway local baked-config health-smoke evidence
+
+The bounded local status is
+`GATEWAY_LOCAL_HEALTH_SMOKE=HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`.
+
+C2G10L194 directly started the exact local Gateway candidate image without
+Compose, host ports, bind mounts, production paths, or external networking.
+The baked-config static contract and image identity matched. Command-defined
+dummy environment values and tmpfs paths `/data`, `/state`, and `/tmp` were
+used. One container-internal `GET /health` returned HTTP `200` with
+`status=ok`; provider requests, OpenRouter contacts, and paid requests were `0`.
+
+L194 nevertheless ended as `ABORT_L194_CLEANUP_STOP_FAILED`, so it is not a
+clean single-pass PASS. C2G10L195 subsequently confirmed that the exact
+temporary container was already absent and reported
+`PASS_CLEANUP_ALREADY_ABSENT`. The combined classification is
+`health-success-with-cleanup-recovery`.
+
+The ignored host config was not read or bound. This evidence does not validate
+the baked config's content or secret-freedom, production configuration,
+Gateway readiness, authentication, model listing, chat, streaming, tools,
+providers, persistence, Compose, deployment, restart, or production.
 
 ## Remaining deployment blockers
 
@@ -197,8 +223,9 @@ production deployment readiness.
 - VPS Docker Compose validation and live RAM/disk headroom;
 - fresh registry digest validation, fresh Docker build, dependency install, and
   Docker ignore behavior validation;
-- image push `NOT_PUSHED`, deploy `NOT_DEPLOYED`, candidate run `NOT_RUN`, and
-  runtime verify `NOT_VERIFIED`;
+- image push `NOT_PUSHED` and deploy `NOT_DEPLOYED`; local Gateway evidence is
+  limited to `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`, with no full runtime
+  verification;
 - final old Ombre baseline revalidation immediately before any VPS mutation.
 
 The current static bundle records a pinned Python base-image digest, a
@@ -223,11 +250,11 @@ installed baseline for this line unless future evidence proves that.
 `https://github.com/P0luz/Ombre-Brain` remains the historical upstream/original
 reference only.
 
-C2G10 currently captures static handoff, deploy, and restart-readiness
-artifacts only. It does not validate runtime restart success, Gateway runtime
-readiness, production or deployment readiness, Docker build success, dependency
-installation success, broad provider/model cache support, or any direct
-upstream merge/chase path.
+C2G10 contains static handoff/deployment artifacts plus one bounded local
+Gateway health observation with cleanup recovery. It does not validate runtime
+restart success, full Gateway readiness, production or deployment readiness,
+provider/model behavior, dependency-install freshness, or an upstream
+merge/chase path.
 
 Future work must not directly pull or merge the P0luz upstream into this line.
 Upstream changes require a separate read-only impact audit before any minimal

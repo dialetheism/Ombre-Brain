@@ -924,8 +924,10 @@ docker build --pull=false -f casper-deploy/Dockerfile.production --build-arg SOU
 - OS/architecture: `linux/amd64`
 - Created: `2026-08-30T17:46:11.42035904Z`
 - Size: `106514296`
-- Verification status: `IMAGE_METADATA_OBSERVED_ONLY`
-- Run status: `NOT_RUN`
+- Metadata status: `IMAGE_METADATA_OBSERVED_ONLY`
+- Local health-smoke status:
+  `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`
+- Combined classification: `health-success-with-cleanup-recovery`
 - Push status: `NOT_PUSHED`
 - Deploy status: `NOT_DEPLOYED`
 
@@ -934,14 +936,45 @@ Boundary notes: Docker Hub metadata/auth contact was observed despite
 is not proven by the visible build output. The locked pip install step was
 `CACHED`, so fresh dependency install/download is not proven. Full `Config.Env`
 was not printed, and no secret-like values were printed in the narrow metadata
-output. No Docker run, Compose, image push, deploy, or runtime validation
-occurred.
+output. No Compose, image push, deploy, production contact, provider call, or
+real-secret validation occurred.
 
 Fresh base image registry validation remains `INCONCLUSIVE / NOT_VALIDATED`.
 Static base image provenance remains `FROZEN_STATIC_VALIDATED`. This evidence
 does not prove runtime readiness, Gateway readiness, OpenRouter behavior,
 production readiness, registry push, deploy readiness, tests/scripts/hooks,
 old-Ombre safety proof, or real secret validation.
+
+### Gateway local baked-config health-smoke evidence
+
+`GATEWAY_LOCAL_HEALTH_SMOKE=HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`
+
+C2G10L194 ran the exact Gateway candidate image ID once using direct
+`docker run`, not Compose. The image identity and tracked baked-config contract
+matched. The command intentionally omitted the host config bind and used the
+image-baked `/app/config.yaml` path. The ignored
+`casper-deploy/config/config.yaml` was not read, trusted, printed, or bound.
+
+The local container used command-defined dummy environment values,
+`--network=none`, no host ports, no bind mounts, no production binds, and tmpfs
+for `/data`, `/state`, and `/tmp`. Exactly one container-internal
+`GET /health` request was attempted. It returned HTTP `200` with `status=ok`.
+Provider requests, OpenRouter contacts, and paid requests were all `0`.
+
+L194 was not a clean single-pass PASS. Its overall result was
+`ABORT_L194_CLEANUP_STOP_FAILED` at `CLEANUP_STOP`, with
+`cleanup_succeeded=false` and `final_git_clean=NOT_OBSERVED`. The latter means
+the final Git closure was not reached; it does not prove that Git became dirty.
+
+C2G10L195 later performed an exact-container cleanup-only check and returned
+`PASS_CLEANUP_ALREADY_ABSENT`, with `final_absent=true` and
+`cleanup_succeeded=true`. L195 performed no Docker run, exec, Compose, logs,
+force removal, provider request, or network/registry/GitHub contact.
+
+The combined evidence classification is
+`health-success-with-cleanup-recovery`, not clean single-pass smoke PASS.
+It does not establish full runtime, Gateway, authentication, provider,
+production, deployment, Compose, persistence, or real-secret readiness.
 
 ### Future Brain-only Compose delta
 
