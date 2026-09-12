@@ -179,9 +179,11 @@ material. YAML parsing, Python compile, Git Bash shell syntax, patch scan, and
 repository contamination checks all remain mandatory.
 
 The bundle-validation pass described above did not invoke Docker or Docker
-Compose. Separately authorized C2G10L194/L195 local evidence is recorded below;
-it does not convert this static acceptance record into production or deployment
-readiness. C2D2B adds private-device proof of same-conversation stability,
+Compose. Separately authorized C2G10L194/L195 local health evidence and
+human-run L208 R2 patched local models dummy-auth evidence are recorded below.
+Neither converts this static acceptance record into full runtime, production,
+or deployment readiness. C2D2B adds private-device proof of same-conversation
+stability,
 cross-conversation isolation, restart persistence, no-header absence, and
 static-header compatibility. It does not mean the debug APK is a production
 client, nor does it establish real-provider, VPS, or production deployment
@@ -210,6 +212,30 @@ the baked config's content or secret-freedom, production configuration,
 Gateway readiness, authentication, model listing, chat, streaming, tools,
 providers, persistence, Compose, deployment, restart, or production.
 
+## Separate human-run R2 local models dummy-auth evidence
+
+Static acceptance itself did not execute this runtime check. Separately
+authorized human-run local PowerShell `7.6.6` evidence is classified
+`HUMAN_RUN_R2_PATCHED_PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`; the R2
+controller emitted
+`GATEWAY_MODELS_DUMMY_AUTH_LOCAL_ONLY=PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`.
+
+The R2 compatibility-patched variant used the exact local candidate image,
+generated no-secret temporary configuration, matching dummy Bearer
+authentication, network-none isolation, no host ports, and bounded cleanup.
+One container-internal `GET /v1/models` returned HTTP `200`;
+`schema_ok=true`, `expected_alias_present=true`, and `request_count=1`.
+Real Provider-target contacts, OpenRouter contacts, and paid requests were
+`0`. Final container absence, temporary-config cleanup, and Git closure
+reported `PASS`.
+
+This evidence was human-run, not Codex-run, and was not an
+exact-original-L207R4 PASS. It validates only one matching-dummy-Bearer local
+models success case. Missing-token, wrong-token, full auth-matrix, real-token,
+chat, messages, streaming, tools, prompt-cache, Provider/OpenRouter, Compose,
+deployment, restart, production, real-secret, baked-config, registry,
+tests/scripts/hooks, persistence, and old-Ombre readiness remain unvalidated.
+
 ## Remaining deployment blockers
 
 - user-owned long-lived Android signing key, signed production release build,
@@ -223,9 +249,11 @@ providers, persistence, Compose, deployment, restart, or production.
 - VPS Docker Compose validation and live RAM/disk headroom;
 - fresh registry digest validation, fresh Docker build, dependency install, and
   Docker ignore behavior validation;
-- image push `NOT_PUSHED` and deploy `NOT_DEPLOYED`; local Gateway evidence is
-  limited to `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`, with no full runtime
-  verification;
+- image push remains `NOT_PUSHED` and deploy remains `NOT_DEPLOYED`; local
+  Gateway evidence consists of the separate L194/L195
+  `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY` result and one human-run R2
+  matching-dummy-Bearer `/v1/models` success case, neither of which establishes
+  full runtime, auth-matrix, provider, deployment, or production readiness;
 - final old Ombre baseline revalidation immediately before any VPS mutation.
 
 The current static bundle records a pinned Python base-image digest, a

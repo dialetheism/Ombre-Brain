@@ -1,6 +1,6 @@
 # Casper Ombre Runtime Operations and Troubleshooting Runbook
 
-Last documentation update: 2026-08-27
+Last documentation update: 2026-09-12
 
 ## 1. Purpose and scope
 
@@ -184,26 +184,65 @@ L194's overall result remained `ABORT_L194_CLEANUP_STOP_FAILED`. C2G10L195
 later confirmed the exact temporary container was already absent. Record this
 as `health-success-with-cleanup-recovery`, not a clean single-pass smoke PASS.
 
-This observation authorizes no repeat request, `/v1/models`, Bearer check,
-chat, streaming, tools, provider call, Compose operation, restart, deployment,
-production contact, or old-Ombre contact.
+The L194/L195 health observation by itself authorized no repeat request,
+`/v1/models`, Bearer check, chat, streaming, tools, provider call, Compose
+operation, restart, deployment, production contact, or old-Ombre contact. The
+later human-run evidence below was separately authorized and does not
+retroactively change L194/L195 into a clean single-pass PASS.
+
+### Recorded human-run L208 R2 patched models dummy-auth evidence
+
+The recorded classification is
+`HUMAN_RUN_R2_PATCHED_PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`. The R2
+controller emitted
+`GATEWAY_MODELS_DUMMY_AUTH_LOCAL_ONLY=PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`.
+
+This was a human-run local PowerShell `7.6.6` execution of an R2
+compatibility-patched variant derived from the reviewed L207R4 script. It was
+not a Codex-run L208 PASS and was not an exact-original-L207R4 PASS. The R2
+script SHA-256 was
+`EEA83D5C1BC7913FBCE243B04AD7E0F2D219A3147E51F0ACFCA013157A2E0849`.
+Its compatibility changes were limited to .NET temporary-directory creation
+and Docker Desktop inspect-output handling for tmpfs and
+`no-new-privileges`; the authorized Docker run, request, isolation, output,
+and cleanup boundaries remained unchanged.
+
+Using the exact local Gateway candidate image, a generated no-secret temporary
+config, explicit dummy environment values, `--network=none`, no host ports,
+and one matching dummy Gateway Bearer token, one container-internal
+`GET /v1/models` returned HTTP `200`. The response passed the bounded schema
+check and contained the configured dummy alias. The Gateway request count was
+`1`; contacts to real Provider targets, OpenRouter contacts, and paid requests
+were `0`. All authorized controller stages, including ordinary stop/remove,
+final container absence, temporary-config cleanup, and final Git closure,
+reported `PASS`.
+
+This evidence closes only the one matching-dummy-Bearer local success case. It
+does not validate missing-token or wrong-token behavior, a complete auth
+matrix, a real client token, chat, messages, streaming, tools, prompt cache,
+Provider/OpenRouter behavior, Compose, deployment, restart, production,
+production configuration, real secrets, baked-config correctness or
+secret-freedom, registry push readiness, tests/scripts/hooks, persistence, or
+old-Ombre safety.
 
 Still unvalidated in this validation line:
 
 - no runtime restart success or full Gateway readiness has been proven;
 - no production/deployment or Compose readiness has been proven;
-- no Gateway endpoint other than one isolated container-internal
-  `GET /health` has been checked;
-- no `/v1/models`, Bearer/client authentication, chat, messages, streaming,
-  tools, prompt-cache, admin, mutation, memory, or hook behavior has been
-  validated;
-- no provider or OpenRouter call has been made;
+- `/health` has only the separate L194/L195
+  `health-success-with-cleanup-recovery` evidence;
+- `/v1/models` has only one local matching-dummy-Bearer success-case check;
+  missing-token, wrong-token, auth-matrix, real-token, and client-readiness
+  checks remain unvalidated;
+- chat, messages, streaming, tools, prompt-cache, admin, mutation, memory, and
+  hook behavior remain unvalidated;
+- no real Provider or OpenRouter call has been made;
 - no target or production runtime contact has been made;
 - no real secret, formal persistence, or production-config validation has been
   performed;
 - no old-Ombre check or safety proof has been made;
-- fresh dependency installation and fresh base-image registry validation remain
-  unproven.
+- fresh dependency installation and fresh base-image registry validation
+  remain unproven.
 
 ## 6. Symptom: RikkaHub cannot connect
 

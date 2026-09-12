@@ -98,6 +98,49 @@ source:
   gateway_local_health_smoke_final_absent: true
   gateway_local_health_smoke_cleanup_recovered: true
   gateway_local_health_smoke_config_boundary: "casper-deploy/config/config.yaml remained untracked/ignored and was not read or bound; baked config correctness, secret-freedom, and production equivalence are not claimed."
+  gateway_local_models_dummy_auth_evidence_classification: "HUMAN_RUN_R2_PATCHED_PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY"
+  gateway_local_models_dummy_auth_script_output_status: "PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY"
+  gateway_local_models_dummy_auth_execution_runner: "HUMAN_LOCAL_POWERSHELL_7.6.6"
+  gateway_local_models_dummy_auth_codex_run: false
+  gateway_local_models_dummy_auth_exact_original_l207r4_pass: false
+  gateway_local_models_dummy_auth_original_script_sha256: "5359A9B533C310376DB6FDC577CB43D58C9CC70351D5648F554ECF1B1F8D0CE2"
+  gateway_local_models_dummy_auth_original_script_result: "ABORT_TEMP_PATH"
+  gateway_local_models_dummy_auth_original_script_request_attempted: false
+  gateway_local_models_dummy_auth_r1_script_sha256: "EFB59AA088CC3015787D91963F1C39C1E56286A23C58D863287FB4BE477B74C0"
+  gateway_local_models_dummy_auth_r1_script_result: "ABORT_CONTAINER_BOUNDARY_VERIFY"
+  gateway_local_models_dummy_auth_r1_request_attempted: false
+  gateway_local_models_dummy_auth_r1_cleanup_passed: true
+  gateway_local_models_dummy_auth_r2_script_sha256: "EEA83D5C1BC7913FBCE243B04AD7E0F2D219A3147E51F0ACFCA013157A2E0849"
+  gateway_local_models_dummy_auth_r2_patch_classification: "TEMP_PATH_AND_DOCKER_DESKTOP_INSPECT_OUTPUT_COMPATIBILITY_ONLY"
+  gateway_local_models_dummy_auth_r2_result: "PASS"
+  gateway_local_models_dummy_auth_image_id: "sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee"
+  gateway_local_models_dummy_auth_method_path: "GET /v1/models (container-internal)"
+  gateway_local_models_dummy_auth_auth_scope: "ONE_MATCHING_DUMMY_BEARER_SUCCESS_CASE_ONLY"
+  gateway_local_models_dummy_auth_http_status: 200
+  gateway_local_models_dummy_auth_schema_ok: true
+  gateway_local_models_dummy_auth_expected_dummy_alias_present: true
+  gateway_local_models_dummy_auth_request_count: 1
+  gateway_local_models_dummy_auth_request_count_scope: "CONTAINER_PROBE_HTTP_ATTEMPT"
+  gateway_local_models_dummy_auth_provider_requests: 0
+  gateway_local_models_dummy_auth_provider_requests_scope: "REAL_PROVIDER_TARGETS_ONLY"
+  gateway_local_models_dummy_auth_openrouter_contacted: false
+  gateway_local_models_dummy_auth_paid_requests: 0
+  gateway_local_models_dummy_auth_external_network_contacted: false
+  gateway_local_models_dummy_auth_local_loopback_requested: true
+  gateway_local_models_dummy_auth_compose_used: false
+  gateway_local_models_dummy_auth_no_secret_temp_config_used: true
+  gateway_local_models_dummy_auth_ignored_config_read: false
+  gateway_local_models_dummy_auth_real_secrets_used: false
+  gateway_local_models_dummy_auth_all_authorized_stages_passed: true
+  gateway_local_models_dummy_auth_cleanup_identity_passed: true
+  gateway_local_models_dummy_auth_stop_passed: true
+  gateway_local_models_dummy_auth_remove_passed: true
+  gateway_local_models_dummy_auth_final_absent: true
+  gateway_local_models_dummy_auth_temp_config_cleaned: true
+  gateway_local_models_dummy_auth_final_git_clean: true
+  gateway_local_models_dummy_auth_push_status: "NOT_PUSHED"
+  gateway_local_models_dummy_auth_deploy_status: "NOT_DEPLOYED"
+  gateway_local_models_dummy_auth_claim_boundary: "One human-run R2 compatibility-patched local matching-dummy-Bearer GET /v1/models success case only; no Codex-run or exact-original-L207R4 PASS, auth matrix, real token, chat/messages/streaming/tools, Provider/OpenRouter, prompt-cache, Compose, deploy/restart/production, real-secret, baked-config, registry, tests/scripts/hooks, persistence, or old-Ombre readiness is claimed."
   prompt_cache_validation_status: "BLOCKED_NO_SAFE_GATEWAY_TOKEN_SOURCE"
 
 runtime:

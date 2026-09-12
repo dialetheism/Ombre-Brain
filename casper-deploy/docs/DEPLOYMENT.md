@@ -976,6 +976,68 @@ The combined evidence classification is
 It does not establish full runtime, Gateway, authentication, provider,
 production, deployment, Compose, persistence, or real-secret readiness.
 
+### Gateway human-run R2 patched local models dummy-auth evidence
+
+The evidence classification is
+`HUMAN_RUN_R2_PATCHED_PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`. The
+successful controller output was
+`GATEWAY_MODELS_DUMMY_AUTH_LOCAL_ONLY=PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`.
+
+This was human-run evidence from local PowerShell `7.6.6`, not a Codex-run
+L208 PASS and not an exact-original-L207R4 PASS. The script sequence was:
+
+- Exact reviewed L207R4 script:
+  SHA-256
+  `5359A9B533C310376DB6FDC577CB43D58C9CC70351D5648F554ECF1B1F8D0CE2`;
+  result `ABORT_TEMP_PATH`. Git, PowerShell, Docker local-boundary, and image
+  identity stages passed. No temporary config, container, or request was
+  created.
+- R1 compatibility-patched script:
+  SHA-256
+  `EFB59AA088CC3015787D91963F1C39C1E56286A23C58D863287FB4BE477B74C0`;
+  it replaced temporary-directory creation with
+  `System.IO.Directory.CreateDirectory`; result
+  `ABORT_CONTAINER_BOUNDARY_VERIFY`. The container was started, but no
+  `/v1/models` request was sent. Cleanup identity, ordinary stop/remove, final
+  absence, temporary-config cleanup, and final Git closure all passed.
+- R2 compatibility-patched script:
+  SHA-256
+  `EEA83D5C1BC7913FBCE243B04AD7E0F2D219A3147E51F0ACFCA013157A2E0849`;
+  it retained the R1 temporary-directory compatibility change and adjusted
+  only tmpfs and `no-new-privileges` verification for Docker Desktop's actual
+  field output. The Docker run, request, network, no-secret, resource,
+  redaction, and cleanup boundaries were unchanged. Result: `PASS`.
+
+The R2 run used the exact local candidate image ID
+`sha256:e310204389ef5a6240bdc3533c382d2b8b77a00a559a0a3615d7ac66a2148dee`,
+direct `docker run`, a generated no-secret temporary config, explicit dummy
+environment values, `--network=none`, no host ports, one readonly temporary
+config bind, tmpfs for `/data`, `/state`, and `/tmp`, a readonly root
+filesystem, dropped capabilities, `no-new-privileges`, bounded resources, and
+no Compose.
+
+Exactly one matching-dummy-Bearer container-internal `GET /v1/models` request
+was attempted. It returned HTTP `200`; `schema_ok=true` and
+`expected_alias_present=true`. `request_count=1` with scope
+`CONTAINER_PROBE_HTTP_ATTEMPT`. Requests or contacts to real Provider targets
+were `0`, OpenRouter contact was `false`, and paid requests were `0`.
+
+All eighteen authorized stages passed, including container boundary
+verification, request minimization, cleanup identity, ordinary stop/remove,
+final absence, exact temporary-config cleanup, and final clean Git closure.
+Repository files were not modified, created, deleted, or staged. The temporary
+no-secret config was created only for execution and was deleted successfully.
+
+The image remains `NOT_PUSHED` and `NOT_DEPLOYED`. This evidence validates only
+one local matching-dummy-Bearer `/v1/models` success case. It does not validate
+missing-token or wrong-token behavior, a complete auth matrix, a real client
+token, chat, messages, streaming, tools, prompt cache, Provider/OpenRouter
+behavior, Compose, deployment, restart, production, production-config
+equivalence, real secrets, baked-config correctness or secret-freedom,
+registry push readiness, tests/scripts/hooks, persistence, or old-Ombre
+safety. It does not change the L194/L195
+`health-success-with-cleanup-recovery` classification.
+
 ### Future Brain-only Compose delta
 
 This historical delta has already been represented for the Brain image and

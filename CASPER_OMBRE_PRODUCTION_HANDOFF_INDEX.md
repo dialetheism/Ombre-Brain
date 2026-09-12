@@ -1,6 +1,6 @@
 # Casper Ombre Production Handoff Master Index
 
-Last documentation update: 2026-09-09
+Last documentation update: 2026-09-12
 
 This file is the non-secret master handoff index for Casper Ombre-Brain. It records previously verified production and handoff facts; it is not a live VPS check. This document does not authorize any operational next stage.
 
@@ -13,6 +13,14 @@ This file is the non-secret master handoff index for Casper Ombre-Brain. It reco
 - The C2G10E `server.py` application-layer hardening patch exists only in the local working tree and has not been built or deployed.
 - Current production therefore remains on the pre-hardening source until credential provisioning, build, deployment, and the required Casper restart are separately authorized and completed.
 - Separate local-only Gateway candidate evidence is classified `HEALTH_OK_WITH_CLEANUP_RECOVERY_LOCAL_ONLY`. It did not contact, deploy, restart, or validate production and does not alter the current production image or configuration.
+- A later human-run local PowerShell `7.6.6` R2 compatibility-patched check is
+  classified
+  `HUMAN_RUN_R2_PATCHED_PASS_BOUNDED_MODELS_DUMMY_AUTH_LOCAL_ONLY`. It verified
+  one matching-dummy-Bearer container-internal `GET /v1/models` success case
+  with HTTP `200`, bounded schema and dummy-alias checks, one Gateway request,
+  zero real-Provider/OpenRouter/paid requests, and complete cleanup. It was not
+  Codex-run, was not an exact-original-L207R4 PASS, and did not contact, deploy,
+  restart, alter, or validate production.
 
 ## 2. Completed verification stages
 
@@ -28,6 +36,16 @@ This file is the non-secret master handoff index for Casper Ombre-Brain. It reco
 - `C2G10H`: this stage updates only the five approved non-secret documentation/configuration files; it performs no source change, credential provisioning, build, network request, restart, or deployment.
 - `C2G10L194`: the exact local Gateway candidate started under isolated, dummy-environment, no-host-port, no-bind, network-none boundaries; one container-internal `/health` returned HTTP `200` with `status=ok`. The stage ended `ABORT_L194_CLEANUP_STOP_FAILED`, so it is not a clean single-pass PASS.
 - `C2G10L195`: cleanup-only exact-container verification returned `PASS_CLEANUP_ALREADY_ABSENT`, with `final_absent=true` and `cleanup_succeeded=true`. Combined L194/L195 classification: `health-success-with-cleanup-recovery`.
+- `C2G10L208 human-run R2 compatibility-patched variant`: local-only bounded
+  dummy-auth `/v1/models` evidence — `PASS`. The R2 script SHA-256 was
+  `EEA83D5C1BC7913FBCE243B04AD7E0F2D219A3147E51F0ACFCA013157A2E0849`.
+  One matching dummy Bearer request returned HTTP `200`; schema and configured
+  dummy-alias checks passed; request count was `1`; real Provider-target,
+  OpenRouter, and paid request counts were `0`; final container absence,
+  temporary-config cleanup, and Git closure passed. The exact original script
+  and R1 compatibility variant remain recorded separately as
+  `ABORT_TEMP_PATH` and `ABORT_CONTAINER_BOUNDARY_VERIFY`; neither attempted
+  `/v1/models`.
 
 ## 3. Local paths
 
