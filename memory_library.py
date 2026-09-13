@@ -374,13 +374,10 @@ class MemoryLibrary:
         if memory_id != filename_match.group("id"):
             raise MemoryFormatError("memory ID does not match its filename")
 
-        raw_title = metadata.get("name") or metadata.get("title")
-        try:
-            title = _normalize_title(raw_title)
-            body = _normalize_body(post.content)
-            tags = _normalize_tags(metadata.get("tags", []))
-        except (TypeError, ValueError) as error:
-            raise MemoryFormatError("invalid Phase 1 memory text fields") from None
+        raw_title = metadata["name"] if "name" in metadata else metadata.get("title")
+        title = _validate_stored_title(raw_title)
+        body = _validate_stored_body(post.content)
+        tags = _validate_stored_tags(metadata.get("tags"))
 
         source = metadata.get("source")
         if source != _SOURCE:
@@ -606,6 +603,47 @@ def _normalize_tags(value: object) -> tuple[str, ...]:
             seen.add(tag)
             tags.append(tag)
     return tuple(tags)
+
+
+def _validate_stored_title(value: object) -> str:
+    """Accept a persisted title only when creation would leave it unchanged."""
+
+    try:
+        normalized = _normalize_title(value)
+    except (TypeError, ValueError):
+        raise MemoryFormatError("invalid Phase 1 stored title") from None
+    if normalized != value:
+        raise MemoryFormatError("stored Phase 1 title is not canonical")
+    return value
+
+
+def _validate_stored_tags(value: object) -> tuple[str, ...]:
+    """Validate persisted tag order and values without cleaning or deduplication."""
+
+    if not isinstance(value, list):
+        raise MemoryFormatError("stored Phase 1 tags must be a list")
+    try:
+        normalized = _normalize_tags(value)
+    except (TypeError, ValueError):
+        raise MemoryFormatError("invalid Phase 1 stored tags") from None
+    if list(normalized) != value:
+        raise MemoryFormatError("stored Phase 1 tags are not canonical")
+    return tuple(value)
+
+
+def _validate_stored_body(value: object) -> str:
+    """Validate parser-provided body text without changing the returned value."""
+
+    # ``frontmatter.load`` has already removed the frontmatter delimiters. The
+    # facade performs no further framing or newline cleanup here: the parsed
+    # body must already equal the form accepted and written by ``create()``.
+    try:
+        normalized = _normalize_body(value)
+    except (TypeError, ValueError):
+        raise MemoryFormatError("invalid Phase 1 stored body") from None
+    if normalized != value:
+        raise MemoryFormatError("stored Phase 1 body is not canonical")
+    return value
 
 
 def _normalize_source_id(value: object) -> str | None:
