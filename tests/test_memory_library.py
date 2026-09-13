@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import re
+import socket
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -272,6 +275,51 @@ def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None
     assert before == after
     assert not (root / "state").exists()
     assert not any(path.suffix in {".db", ".jsonl"} for path in root.rglob("*"))
+
+
+def test_facade_operations_make_zero_network_calls(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _isolated_root(tmp_path)
+    network_calls: list[str] = []
+
+    def blocked(entrypoint: str):
+        def fail(*_args: object, **_kwargs: object) -> None:
+            network_calls.append(entrypoint)
+            raise AssertionError(f"unexpected network call through {entrypoint}")
+
+        return fail
+
+    monkeypatch.setattr(socket, "socket", blocked("socket.socket"))
+    monkeypatch.setattr(
+        socket,
+        "create_connection",
+        blocked("socket.create_connection"),
+    )
+    monkeypatch.setattr(
+        http.client.HTTPConnection,
+        "connect",
+        blocked("http.client.HTTPConnection.connect"),
+    )
+    monkeypatch.setattr(
+        http.client.HTTPSConnection,
+        "connect",
+        blocked("http.client.HTTPSConnection.connect"),
+    )
+    monkeypatch.setattr(
+        urllib.request,
+        "urlopen",
+        blocked("urllib.request.urlopen"),
+    )
+
+    library = MemoryLibrary(root)
+    record = library.create("Offline memory", "networkless lexical body", ["offline"])
+
+    assert library.get(record.id) == record
+    assert [item.id for item in library.list()] == [record.id]
+    assert [result.record.id for result in library.search("networkless")] == [record.id]
+    assert network_calls == []
 
 
 def test_dynamic_archive_and_ignored_layer_boundaries(tmp_path: Path) -> None:
