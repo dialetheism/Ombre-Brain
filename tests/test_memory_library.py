@@ -290,6 +290,29 @@ def test_list_and_search_reject_invalid_limits(
         library.search("query", limit=invalid_limit)
 
 
+@pytest.mark.parametrize(
+    "invalid_memory_id",
+    [
+        None,
+        "",
+        "abc",
+        "123456789abcd",
+        "ABCDEF123456",
+        "zzzzzzzzzzzz",
+        "../abcdef123456",
+        r"abcdef123456\evil",
+    ],
+)
+def test_get_rejects_invalid_memory_ids(
+    tmp_path: Path,
+    invalid_memory_id: object,
+) -> None:
+    library = MemoryLibrary(_isolated_root(tmp_path))
+
+    with pytest.raises(ValueError):
+        library.get(invalid_memory_id)
+
+
 def test_facade_operations_make_zero_network_calls(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
