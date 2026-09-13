@@ -277,6 +277,19 @@ def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None
     assert not any(path.suffix in {".db", ".jsonl"} for path in root.rglob("*"))
 
 
+@pytest.mark.parametrize("invalid_limit", [True, 0, 101, "3"])
+def test_list_and_search_reject_invalid_limits(
+    tmp_path: Path,
+    invalid_limit: object,
+) -> None:
+    library = MemoryLibrary(_isolated_root(tmp_path))
+
+    with pytest.raises(ValueError):
+        library.list(limit=invalid_limit)
+    with pytest.raises(ValueError):
+        library.search("query", limit=invalid_limit)
+
+
 def test_facade_operations_make_zero_network_calls(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
