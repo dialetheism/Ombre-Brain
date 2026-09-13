@@ -363,7 +363,8 @@ class MemoryLibrary:
             raise MemoryFormatError("invalid Phase 1 memory filename")
 
         try:
-            post = frontmatter.load(str(resolved))
+            raw_text = resolved.read_text(encoding="utf-8")
+            post = frontmatter.loads(raw_text)
         except Exception:
             raise MemoryFormatError("malformed Phase 1 memory frontmatter") from None
 
@@ -376,7 +377,7 @@ class MemoryLibrary:
 
         raw_title = metadata["name"] if "name" in metadata else metadata.get("title")
         title = _validate_stored_title(raw_title)
-        body = _validate_stored_body(post.content)
+        body = _validate_stored_body(post.content, raw_text=raw_text)
         tags = _validate_stored_tags(metadata.get("tags"))
 
         source = metadata.get("source")
@@ -631,10 +632,10 @@ def _validate_stored_tags(value: object) -> tuple[str, ...]:
     return tuple(value)
 
 
-def _validate_stored_body(value: object) -> str:
+def _validate_stored_body(value: object, *, raw_text: str) -> str:
     """Validate parser-provided body text without changing the returned value."""
 
-    # ``frontmatter.load`` has already removed the frontmatter delimiters. The
+    # The frontmatter parser has already removed the frontmatter delimiters. The
     # facade performs no further framing or newline cleanup here: the parsed
     # body must already equal the form accepted and written by ``create()``.
     try:
@@ -642,6 +643,29 @@ def _validate_stored_body(value: object) -> str:
     except (TypeError, ValueError):
         raise MemoryFormatError("invalid Phase 1 stored body") from None
     if normalized != value:
+        raise MemoryFormatError("stored Phase 1 body is not canonical")
+
+    lines = raw_text.splitlines(keepends=True)
+    if not lines or re.fullmatch(r"---[ \t]*(?:\n)?", lines[0]) is None:
+        raise MemoryFormatError("malformed Phase 1 memory frontmatter")
+    for index, line in enumerate(lines[1:], start=1):
+        if re.fullmatch(r"---[ \t]*(?:\n)?", line) is not None:
+            raw_body = "".join(lines[index + 1 :])
+            break
+    else:
+        raise MemoryFormatError("malformed Phase 1 memory frontmatter")
+
+    # ``frontmatter.dumps()`` inserts one separator newline before the body,
+    # and ``create()`` ensures one terminal file newline. Exclude only those
+    # framing newlines; all other outer whitespace remains body content.
+    if raw_body.startswith("\n"):
+        raw_body = raw_body[1:]
+    stored_body = raw_body[:-1] if raw_body.endswith("\n") else raw_body
+    try:
+        normalized_stored_body = _normalize_body(stored_body)
+    except (TypeError, ValueError):
+        raise MemoryFormatError("invalid Phase 1 stored body") from None
+    if normalized_stored_body != stored_body or stored_body != value:
         raise MemoryFormatError("stored Phase 1 body is not canonical")
     return value
 
