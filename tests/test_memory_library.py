@@ -281,6 +281,40 @@ def test_invalid_utf8_fails_closed_without_rewrite(tmp_path: Path) -> None:
     assert _snapshot_files(root) == before
 
 
+def test_create_retries_id_collision_without_overwriting_existing_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _isolated_root(tmp_path)
+    collision_id = "500000000001"
+    success_id = "500000000002"
+    collided_path = _write_record(
+        root,
+        layer="dynamic",
+        memory_id=collision_id,
+        body="Existing collision sentinel",
+    )
+    collided_key = collided_path.relative_to(root).as_posix()
+    collided_before = _snapshot_files(root)[collided_key]
+    candidates = iter(
+        [
+            memory_module.uuid.UUID(hex=collision_id + "0" * 20),
+            memory_module.uuid.UUID(hex=success_id + "0" * 20),
+        ]
+    )
+    monkeypatch.setattr(memory_module.uuid, "uuid4", lambda: next(candidates))
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    record = library.create("New memory", "Fresh body", ["collision"])
+
+    assert record.id == success_id
+    assert library.get(success_id) == record
+    assert (
+        root / "buckets" / "dynamic" / "未分类" / f"{success_id}.md"
+    ).is_file()
+    assert _snapshot_files(root)[collided_key] == collided_before
+
+
 def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None:
     root = _isolated_root(tmp_path)
     library = MemoryLibrary(root)
