@@ -277,6 +277,21 @@ def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None
     assert not any(path.suffix in {".db", ".jsonl"} for path in root.rglob("*"))
 
 
+def test_search_lexical_miss_returns_empty_without_mutation(tmp_path: Path) -> None:
+    root = _isolated_root(tmp_path)
+    library = MemoryLibrary(root)
+    library.create(
+        "Garden journal",
+        "Tomatoes thrive in summer sunlight.",
+        ["plants"],
+    )
+    before = _snapshot_files(root)
+
+    assert library.search("quantum nebula") == []
+
+    assert _snapshot_files(root) == before
+
+
 @pytest.mark.parametrize("invalid_limit", [True, 0, 101, "3"])
 def test_list_and_search_reject_invalid_limits(
     tmp_path: Path,
