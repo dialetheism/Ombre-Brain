@@ -315,6 +315,70 @@ def test_create_retries_id_collision_without_overwriting_existing_file(
     assert _snapshot_files(root)[collided_key] == collided_before
 
 
+def test_create_retries_when_exclusive_open_sees_raced_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _isolated_root(tmp_path)
+    raced_id = "700000000001"
+    success_id = "700000000002"
+    target_dir = root / "buckets" / "dynamic" / "未分类"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    raced_path = target_dir / f"{raced_id}.md"
+    with raced_path.open("x", encoding="utf-8", newline="\n") as handle:
+        handle.write(
+            _frontmatter_prefix(_metadata(raced_id))
+            + "Existing exclusive-open race sentinel"
+        )
+    raced_key = raced_path.relative_to(root).as_posix()
+    raced_before = _snapshot_files(root)[raced_key]
+
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+    real_find_record_paths = library._find_record_paths
+    hidden_raced_lookups = 0
+
+    def find_record_paths_hiding_first_race(memory_id, paths):
+        nonlocal hidden_raced_lookups
+        matches = real_find_record_paths(memory_id, paths)
+        if memory_id == raced_id and hidden_raced_lookups == 0:
+            assert any(
+                path == raced_path.resolve() and archived is False
+                for path, archived in matches
+            )
+            hidden_raced_lookups += 1
+            return []
+        return matches
+
+    monkeypatch.setattr(
+        library,
+        "_find_record_paths",
+        find_record_paths_hiding_first_race,
+    )
+
+    uuid_candidates = [raced_id, success_id]
+    uuid_calls = 0
+
+    def fake_uuid4():
+        nonlocal uuid_calls
+        if uuid_calls >= len(uuid_candidates):
+            pytest.fail("uuid4 called more than twice")
+        memory_id = uuid_candidates[uuid_calls]
+        uuid_calls += 1
+        return memory_module.uuid.UUID(hex=memory_id + "0" * 20)
+
+    monkeypatch.setattr(memory_module.uuid, "uuid4", fake_uuid4)
+
+    record = library.create("New memory", "Fresh body", ["race"])
+
+    assert record.id == success_id
+    assert uuid_calls == 2
+    assert hidden_raced_lookups == 1
+    successful_path = target_dir / f"{success_id}.md"
+    assert successful_path.is_file()
+    assert library.get(success_id) == record
+    assert _snapshot_files(root)[raced_key] == raced_before
+
+
 def test_create_exhausts_id_collisions_without_creating_or_overwriting_files(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
