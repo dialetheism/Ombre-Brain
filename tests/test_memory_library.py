@@ -315,6 +315,45 @@ def test_create_retries_id_collision_without_overwriting_existing_file(
     assert _snapshot_files(root)[collided_key] == collided_before
 
 
+def test_create_exhausts_id_collisions_without_creating_or_overwriting_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _isolated_root(tmp_path)
+    memory_ids = [f"6000000000{index:02x}" for index in range(128)]
+    for memory_id in memory_ids:
+        _write_record(
+            root,
+            layer="dynamic",
+            memory_id=memory_id,
+            body=f"Collision sentinel {memory_id}",
+        )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+    uuid_calls = 0
+
+    def fake_uuid4():
+        nonlocal uuid_calls
+        if uuid_calls >= len(memory_ids):
+            pytest.fail("uuid4 called more than 128 times")
+        memory_id = memory_ids[uuid_calls]
+        uuid_calls += 1
+        return memory_module.uuid.UUID(hex=memory_id + "0" * 20)
+
+    monkeypatch.setattr(memory_module.uuid, "uuid4", fake_uuid4)
+
+    with pytest.raises(
+        FileExistsError,
+        match=r"^unable to allocate a unique Phase 1 memory ID$",
+    ):
+        library.create("New memory", "Fresh body", ["collision"])
+
+    assert uuid_calls == 128
+    assert _snapshot_files(root) == before
+    target_dir = root / "buckets" / "dynamic" / "未分类"
+    assert not any(target_dir.glob("*.md"))
+
+
 def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None:
     root = _isolated_root(tmp_path)
     library = MemoryLibrary(root)
