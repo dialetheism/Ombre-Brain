@@ -281,6 +281,42 @@ def test_invalid_utf8_fails_closed_without_rewrite(tmp_path: Path) -> None:
     assert _snapshot_files(root) == before
 
 
+def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "800000000001"
+    malformed_id = "800000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid search sentinel",
+    )
+    malformed_path = (
+        root / "buckets" / "dynamic" / "manual" / f"{malformed_id}.md"
+    )
+    malformed_path.write_bytes(b"---\nid: [unterminated\n---\nValid body\n")
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.search("valid search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_create_retries_id_collision_without_overwriting_existing_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
