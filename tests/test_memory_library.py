@@ -317,6 +317,43 @@ def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_malformed_record_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "900000000001"
+    malformed_id = "900000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    malformed_path = (
+        root / "buckets" / "archive" / "manual" / f"{malformed_id}.md"
+    )
+    malformed_path.write_bytes(b"---\nid: [unterminated\n---\nValid body\n")
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.search("valid archive search sentinel", archived=True)
+
+    assert _snapshot_files(root) == before
+
+
 def test_create_retries_id_collision_without_overwriting_existing_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
