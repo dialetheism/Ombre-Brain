@@ -261,6 +261,26 @@ def test_corrupted_frontmatter_fails_closed_without_rewrite(tmp_path: Path) -> N
     assert _snapshot_files(root) == before
 
 
+def test_invalid_utf8_fails_closed_without_rewrite(tmp_path: Path) -> None:
+    root = _isolated_root(tmp_path)
+    memory_id = "400000000001"
+    directory = root / "buckets" / "dynamic" / "manual"
+    directory.mkdir(parents=True)
+    path = directory / f"{memory_id}.md"
+    prefix = _frontmatter_prefix(_metadata(memory_id)).encode("utf-8")
+    path.write_bytes(prefix + b"Valid body \xff\n")
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.get(memory_id)
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_are_deterministic_and_read_only(tmp_path: Path) -> None:
     root = _isolated_root(tmp_path)
     library = MemoryLibrary(root)
