@@ -318,6 +318,46 @@ def test_dynamic_list_and_search_fail_closed_on_invalid_utf8_without_rewrite(
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_invalid_utf8_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "b00000000001"
+    invalid_id = "b00000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive utf8 search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    invalid_path = (
+        root / "buckets" / "archive" / "manual" / f"{invalid_id}.md"
+    )
+    invalid_metadata = _metadata(invalid_id)
+    invalid_metadata["type"] = "archived"
+    prefix = _frontmatter_prefix(invalid_metadata).encode("utf-8")
+    invalid_path.write_bytes(prefix + b"Valid body \xff\n")
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^malformed Phase 1 memory frontmatter$",
+    ):
+        library.search("valid archive utf8 search sentinel", archived=True)
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
