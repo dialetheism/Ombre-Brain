@@ -721,6 +721,49 @@ def test_dynamic_list_and_search_fail_closed_on_control_containing_persisted_bod
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_control_containing_persisted_body_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "c00000000001"
+    invalid_id = "c00000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive control body search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=invalid_id,
+        body="body\x01control",
+        metadata_updates={"type": "archived"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored body$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored body$",
+    ):
+        library.search(
+            "valid archive control body search sentinel",
+            archived=True,
+        )
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
