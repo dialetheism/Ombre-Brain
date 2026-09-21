@@ -845,6 +845,45 @@ def test_archive_list_and_search_fail_closed_on_empty_persisted_body_without_rew
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_noncanonical_persisted_title_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "f10000000001"
+    invalid_id = "f10000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid noncanonical title search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"name": " leading"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^stored Phase 1 title is not canonical$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^stored Phase 1 title is not canonical$",
+    ):
+        library.search("valid noncanonical title search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
