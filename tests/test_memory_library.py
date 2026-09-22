@@ -1099,6 +1099,45 @@ def test_archive_list_and_search_fail_closed_on_missing_persisted_tags_without_r
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_tags_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "f70000000001"
+    invalid_id = "f70000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid invalid tags search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"tags": [1]},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored tags$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored tags$",
+    ):
+        library.search("valid invalid tags search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
