@@ -1263,6 +1263,45 @@ def test_archive_list_and_search_fail_closed_on_noncanonical_persisted_tags_with
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_id_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fb0000000001"
+    invalid_id = "fb0000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid invalid persisted id search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"id": "not-a-valid-id"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 memory ID$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 memory ID$",
+    ):
+        library.search("valid invalid persisted id search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
