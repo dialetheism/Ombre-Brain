@@ -1220,6 +1220,49 @@ def test_dynamic_list_and_search_fail_closed_on_noncanonical_persisted_tags_with
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_noncanonical_persisted_tags_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fa0000000001"
+    invalid_id = "fa0000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive noncanonical tags search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"type": "archived", "tags": ["duplicate", "duplicate"]},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^stored Phase 1 tags are not canonical$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^stored Phase 1 tags are not canonical$",
+    ):
+        library.search(
+            "valid archive noncanonical tags search sentinel",
+            archived=True,
+        )
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
