@@ -1385,6 +1385,50 @@ def test_dynamic_list_and_search_fail_closed_on_persisted_id_filename_mismatch_w
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_persisted_id_filename_mismatch_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fe0000000001"
+    corrupt_filename_id = "fe0000000002"
+    persisted_id = "fe0000000003"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive persisted id filename mismatch search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=corrupt_filename_id,
+        body="Valid body",
+        metadata_updates={"type": "archived", "id": persisted_id},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^memory ID does not match its filename$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^memory ID does not match its filename$",
+    ):
+        library.search(
+            "valid archive persisted id filename mismatch search sentinel",
+            archived=True,
+        )
+
+    assert _snapshot_files(root) == before
+
+
 def test_list_and_search_fail_closed_on_malformed_record_without_rewrite(
     tmp_path: Path,
 ) -> None:
