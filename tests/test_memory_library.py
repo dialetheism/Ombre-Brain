@@ -440,6 +440,45 @@ def test_archive_list_and_search_fail_closed_on_invalid_persisted_provenance_wit
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_source_id_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "ff0000000001"
+    invalid_id = "ff0000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid invalid persisted source id search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"source_id": "../invalid"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 source_id$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 source_id$",
+    ):
+        library.search("valid invalid persisted source id search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_body_without_rewrite(
     tmp_path: Path,
 ) -> None:
