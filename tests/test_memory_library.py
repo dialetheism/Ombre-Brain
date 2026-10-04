@@ -902,6 +902,53 @@ def test_dynamic_list_and_search_fail_closed_on_persisted_last_active_timestamp_
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_persisted_last_active_timestamp_missing_timezone_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fdb000000001"
+    invalid_id = "fdb000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive last active timestamp missing timezone search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={
+            "type": "archived",
+            "last_active": "2026-01-02T03:04:05",
+        },
+        remove_metadata=("updated_at",),
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^Phase 1 updated timestamp must be timezone-aware$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^Phase 1 updated timestamp must be timezone-aware$",
+    ):
+        library.search(
+            "valid archive last active timestamp missing timezone search sentinel",
+            archived=True,
+        )
+
+    assert _snapshot_files(root) == before
+
+
 def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_body_without_rewrite(
     tmp_path: Path,
 ) -> None:
