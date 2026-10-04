@@ -561,6 +561,49 @@ def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_created_timest
     assert _snapshot_files(root) == before
 
 
+def test_archive_list_and_search_fail_closed_on_invalid_persisted_created_timestamp_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fd3000000001"
+    invalid_id = "fd3000000002"
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=valid_id,
+        body="valid archive invalid created timestamp search sentinel",
+        metadata_updates={"type": "archived"},
+    )
+    _write_record(
+        root,
+        layer="archive",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"type": "archived", "created": "not-a-timestamp"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 created timestamp$",
+    ):
+        library.list(archived=True)
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 created timestamp$",
+    ):
+        library.search(
+            "valid archive invalid created timestamp search sentinel",
+            archived=True,
+        )
+
+    assert _snapshot_files(root) == before
+
+
 def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_body_without_rewrite(
     tmp_path: Path,
 ) -> None:
