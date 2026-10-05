@@ -949,6 +949,45 @@ def test_archive_list_and_search_fail_closed_on_persisted_last_active_timestamp_
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_record_type_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fdc000000001"
+    invalid_id = "fdc000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid dynamic invalid record type search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        metadata_updates={"type": "permanent"},
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^dynamic record has an invalid type$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^dynamic record has an invalid type$",
+    ):
+        library.search("valid dynamic invalid record type search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_dynamic_list_and_search_fail_closed_on_invalid_persisted_body_without_rewrite(
     tmp_path: Path,
 ) -> None:
