@@ -1607,6 +1607,45 @@ def test_archive_list_and_search_fail_closed_on_invalid_persisted_title_without_
     assert _snapshot_files(root) == before
 
 
+def test_dynamic_list_and_search_fail_closed_on_missing_persisted_title_without_rewrite(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_root(tmp_path)
+    valid_id = "fde000000001"
+    invalid_id = "fde000000002"
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=valid_id,
+        body="valid dynamic missing title search sentinel",
+    )
+    _write_record(
+        root,
+        layer="dynamic",
+        memory_id=invalid_id,
+        body="Valid body",
+        remove_metadata=("name", "title"),
+    )
+    before = _snapshot_files(root)
+    library = MemoryLibrary(root, allow_existing_nonempty=True)
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored title$",
+    ):
+        library.list()
+
+    assert _snapshot_files(root) == before
+
+    with pytest.raises(
+        MemoryFormatError,
+        match=r"^invalid Phase 1 stored title$",
+    ):
+        library.search("valid dynamic missing title search sentinel")
+
+    assert _snapshot_files(root) == before
+
+
 def test_dynamic_list_and_search_fail_closed_on_missing_persisted_tags_without_rewrite(
     tmp_path: Path,
 ) -> None:
